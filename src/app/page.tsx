@@ -5,6 +5,7 @@ import { format, subDays } from "date-fns";
 import MetricCard from "@/components/dashboard/MetricCard";
 import TrafficChart from "@/components/dashboard/TrafficChart";
 import CampaignsTable from "@/components/dashboard/CampaignsTable";
+import CreativesTable from "@/components/dashboard/CreativesTable";
 import DateRangePicker from "@/components/dashboard/DateRangePicker";
 
 interface MetaAdsData {
@@ -32,6 +33,17 @@ interface MetaAdsData {
     ctr: number;
     cpc: number;
     conversions: number;
+  }>;
+  creatives: Array<{
+    adName: string;
+    spend: number;
+    impressions: number;
+    clicks: number;
+    ctr: number;
+    videoViews: number;
+    thruplays: number;
+    costPerThruplay: number;
+    score: number;
   }>;
 }
 
@@ -138,6 +150,8 @@ export default function MetaAdsPage() {
             />
 
             <CampaignsTable data={data.campaigns} />
+
+            <CreativesTable data={data.creatives} />
           </div>
         ) : null}
       </section>

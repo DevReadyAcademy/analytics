@@ -3,6 +3,7 @@ import {
   getAdsOverview,
   getAdsTimeSeries,
   getCampaigns,
+  getAdCreatives,
 } from "@/lib/meta-ads";
 
 export async function GET(request: NextRequest) {
@@ -12,16 +13,18 @@ export async function GET(request: NextRequest) {
     searchParams.get("endDate") ?? new Date().toISOString().split("T")[0];
 
   try {
-    const [metrics, timeSeries, campaigns] = await Promise.all([
+    const [metrics, timeSeries, campaigns, creatives] = await Promise.all([
       getAdsOverview(startDate, endDate),
       getAdsTimeSeries(startDate, endDate),
       getCampaigns(startDate, endDate),
+      getAdCreatives(startDate, endDate),
     ]);
 
     return NextResponse.json({
       metrics,
       timeSeries,
       campaigns,
+      creatives,
     });
   } catch (error) {
     console.error("Meta Ads API error:", error);
