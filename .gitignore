@@ -10,6 +10,12 @@ build/
 .env.*
 !.env.example
 
+# Service account credentials
+credentials.json
+
+# Next.js
+.next/
+
 # IDE
 .idea/
 *.iml
