@@ -1,10 +1,9 @@
 import { google } from "googleapis";
-import path from "path";
 
-const credentialsPath = path.join(process.cwd(), "credentials.json");
+const credentials = JSON.parse(process.env.GOOGLE_CREDENTIALS || "{}");
 
 const auth = new google.auth.GoogleAuth({
-  keyFile: credentialsPath,
+  credentials,
   scopes: ["https://www.googleapis.com/auth/webmasters.readonly"],
 });
 

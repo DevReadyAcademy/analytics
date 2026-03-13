@@ -4,43 +4,46 @@ import { useEffect, useState, useCallback } from "react";
 import { format, subDays } from "date-fns";
 import MetricCard from "@/components/dashboard/MetricCard";
 import TrafficChart from "@/components/dashboard/TrafficChart";
-import CampaignsTable from "@/components/dashboard/CampaignsTable";
+import SearchQueriesTable from "@/components/dashboard/SearchQueriesTable";
+import PagesTable from "@/components/dashboard/PagesTable";
 import DateRangePicker from "@/components/dashboard/DateRangePicker";
 
-interface MetaAdsData {
+interface SCData {
   metrics: {
-    spend: number;
-    impressions: number;
-    clicks: number;
-    ctr: number;
-    cpc: number;
-    cpm: number;
-    reach: number;
-    conversions: number;
+    totalClicks: number;
+    totalImpressions: number;
+    averageCtr: number;
+    averagePosition: number;
   };
   timeSeries: Array<{
     date: string;
-    spend: number;
-    impressions: number;
     clicks: number;
-  }>;
-  campaigns: Array<{
-    campaignName: string;
-    spend: number;
     impressions: number;
-    clicks: number;
     ctr: number;
-    cpc: number;
-    conversions: number;
+    position: number;
+  }>;
+  queries: Array<{
+    query: string;
+    clicks: number;
+    impressions: number;
+    ctr: number;
+    position: number;
+  }>;
+  pages: Array<{
+    page: string;
+    clicks: number;
+    impressions: number;
+    ctr: number;
+    position: number;
   }>;
 }
 
-export default function MetaAdsPage() {
+export default function SearchConsolePage() {
   const [startDate, setStartDate] = useState(
     format(subDays(new Date(), 28), "yyyy-MM-dd")
   );
   const [endDate, setEndDate] = useState(format(new Date(), "yyyy-MM-dd"));
-  const [data, setData] = useState<MetaAdsData | null>(null);
+  const [data, setData] = useState<SCData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -51,8 +54,8 @@ export default function MetaAdsPage() {
     const params = new URLSearchParams({ startDate, endDate });
 
     try {
-      const res = await fetch(`/api/meta-ads?${params}`);
-      if (!res.ok) throw new Error("Failed to fetch Meta Ads data");
+      const res = await fetch(`/api/search-console?${params}`);
+      if (!res.ok) throw new Error("Failed to fetch Search Console data");
       setData(await res.json());
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Unknown error");
@@ -81,7 +84,9 @@ export default function MetaAdsPage() {
       </div>
 
       <section>
-        <h2 className="text-2xl font-bold text-gray-900 mb-4">Meta Ads</h2>
+        <h2 className="text-2xl font-bold text-gray-900 mb-4">
+          Search Console
+        </h2>
 
         {error && (
           <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4 text-red-700 text-sm">
@@ -95,49 +100,41 @@ export default function MetaAdsPage() {
           <div className="space-y-6">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <MetricCard
-                title="Total Spend"
-                value={data.metrics.spend}
-                format="currency"
+                title="Total Clicks"
+                value={data.metrics.totalClicks}
               />
               <MetricCard
-                title="Impressions"
-                value={data.metrics.impressions}
-              />
-              <MetricCard title="Clicks" value={data.metrics.clicks} />
-              <MetricCard title="Reach" value={data.metrics.reach} />
-            </div>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <MetricCard
-                title="CTR"
-                value={data.metrics.ctr}
-                format="percent_raw"
+                title="Total Impressions"
+                value={data.metrics.totalImpressions}
               />
               <MetricCard
-                title="CPC"
-                value={data.metrics.cpc}
-                format="currency"
+                title="Average CTR"
+                value={data.metrics.averageCtr}
+                format="percent"
               />
               <MetricCard
-                title="CPM"
-                value={data.metrics.cpm}
-                format="currency"
-              />
-              <MetricCard
-                title="Conversions"
-                value={data.metrics.conversions}
+                title="Average Position"
+                value={data.metrics.averagePosition}
+                format="decimal"
               />
             </div>
 
             <TrafficChart
-              title="Ad Spend & Clicks Over Time"
+              title="Search Performance Over Time"
               data={data.timeSeries}
               lines={[
                 { key: "clicks", label: "Clicks", color: "#6366f1" },
-                { key: "spend", label: "Spend (\u20ac)", color: "#f43f5e" },
+                { key: "impressions", label: "Impressions", color: "#f59e0b" },
               ]}
             />
 
-            <CampaignsTable data={data.campaigns} />
+            <SearchQueriesTable data={data.queries} />
+
+            <PagesTable
+              title="Top Pages (Search Console)"
+              data={data.pages}
+              variant="search-console"
+            />
           </div>
         ) : null}
       </section>

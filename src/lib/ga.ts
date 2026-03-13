@@ -1,10 +1,9 @@
 import { BetaAnalyticsDataClient } from "@google-analytics/data";
-import path from "path";
 
-const credentialsPath = path.join(process.cwd(), "credentials.json");
+const credentials = JSON.parse(process.env.GOOGLE_CREDENTIALS || "{}");
 
 const analyticsClient = new BetaAnalyticsDataClient({
-  keyFilename: credentialsPath,
+  credentials,
 });
 
 const propertyId = process.env.GA4_PROPERTY_ID!;

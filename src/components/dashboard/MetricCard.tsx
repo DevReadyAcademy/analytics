@@ -3,7 +3,7 @@ import Card from "@/components/ui/Card";
 interface MetricCardProps {
   title: string;
   value: string | number;
-  format?: "number" | "percent" | "duration" | "decimal";
+  format?: "number" | "percent" | "percent_raw" | "duration" | "decimal" | "currency";
 }
 
 function formatValue(value: string | number, format?: string): string {
@@ -12,6 +12,8 @@ function formatValue(value: string | number, format?: string): string {
   switch (format) {
     case "percent":
       return `${(num * 100).toFixed(1)}%`;
+    case "percent_raw":
+      return `${num.toFixed(2)}%`;
     case "duration": {
       const mins = Math.floor(num / 60);
       const secs = Math.round(num % 60);
@@ -19,6 +21,8 @@ function formatValue(value: string | number, format?: string): string {
     }
     case "decimal":
       return num.toFixed(1);
+    case "currency":
+      return `€${num.toFixed(2)}`;
     case "number":
     default:
       return num.toLocaleString();
