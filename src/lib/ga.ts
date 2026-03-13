@@ -1,6 +1,10 @@
 import { BetaAnalyticsDataClient } from "@google-analytics/data";
 
-const credentials = JSON.parse(process.env.GOOGLE_CREDENTIALS || "{}");
+const raw = JSON.parse(process.env.GOOGLE_CREDENTIALS || "{}");
+const credentials = {
+  ...raw,
+  private_key: raw.private_key?.replace(/\\n/g, "\n"),
+};
 
 const analyticsClient = new BetaAnalyticsDataClient({
   credentials,
