@@ -1,12 +1,27 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { format, subDays } from "date-fns";
+import { format, subDays, differenceInDays } from "date-fns";
 import MetricCard from "@/components/dashboard/MetricCard";
 import TrafficChart from "@/components/dashboard/TrafficChart";
 import DemographicsChart from "@/components/dashboard/DemographicsChart";
 import PagesTable from "@/components/dashboard/PagesTable";
 import DateRangePicker from "@/components/dashboard/DateRangePicker";
+import Card from "@/components/ui/Card";
+
+interface GATrafficSourceRow {
+  dimension: string;
+  sessions: number;
+  users: number;
+  bounceRate: number;
+}
+
+interface GALandingPageRow {
+  page: string;
+  sessions: number;
+  bounceRate: number;
+  avgSessionDuration: number;
+}
 
 interface GAData {
   metrics: {
@@ -16,6 +31,13 @@ interface GAData {
     bounceRate: number;
     avgSessionDuration: number;
   };
+  previousMetrics: {
+    totalUsers: number;
+    sessions: number;
+    pageviews: number;
+    bounceRate: number;
+    avgSessionDuration: number;
+  } | null;
   timeSeries: Array<{ date: string; sessions: number; users: number }>;
   demographics: {
     countries: Array<{ dimension: string; sessions: number; users: number }>;
@@ -29,6 +51,8 @@ interface GAData {
     users: number;
     avgEngagementTime: number;
   }>;
+  trafficSources: GATrafficSourceRow[];
+  landingPages: GALandingPageRow[];
 }
 
 export default function AnalyticsPage() {
@@ -44,10 +68,19 @@ export default function AnalyticsPage() {
     setLoading(true);
     setError(null);
 
-    const params = new URLSearchParams({ startDate, endDate });
+    const days = differenceInDays(new Date(endDate), new Date(startDate));
+    const compareEndDate = format(subDays(new Date(startDate), 1), "yyyy-MM-dd");
+    const compareStartDate = format(subDays(new Date(compareEndDate), days), "yyyy-MM-dd");
+
+    const params = new URLSearchParams({
+      startDate,
+      endDate,
+      compareStartDate,
+      compareEndDate,
+    });
 
     try {
-      const res = await fetch(`/api/ga?${params}`);
+      const res = await fetch(`/api/ga?${params}`, { cache: "no-store" });
       if (!res.ok) throw new Error("Failed to fetch GA4 data");
       setData(await res.json());
     } catch (err: unknown) {
@@ -65,6 +98,8 @@ export default function AnalyticsPage() {
     setStartDate(start);
     setEndDate(end);
   };
+
+  const prev = data?.previousMetrics;
 
   return (
     <div className="space-y-8">
@@ -95,18 +130,30 @@ export default function AnalyticsPage() {
               <MetricCard
                 title="Total Users"
                 value={data.metrics.totalUsers}
+                previousValue={prev?.totalUsers}
               />
-              <MetricCard title="Sessions" value={data.metrics.sessions} />
-              <MetricCard title="Pageviews" value={data.metrics.pageviews} />
+              <MetricCard
+                title="Sessions"
+                value={data.metrics.sessions}
+                previousValue={prev?.sessions}
+              />
+              <MetricCard
+                title="Pageviews"
+                value={data.metrics.pageviews}
+                previousValue={prev?.pageviews}
+              />
               <MetricCard
                 title="Bounce Rate"
                 value={data.metrics.bounceRate}
                 format="percent"
+                previousValue={prev?.bounceRate}
+                invertColor
               />
               <MetricCard
                 title="Avg. Session Duration"
                 value={data.metrics.avgSessionDuration}
                 format="duration"
+                previousValue={prev?.avgSessionDuration}
               />
             </div>
 
@@ -118,6 +165,41 @@ export default function AnalyticsPage() {
                 { key: "users", label: "Users", color: "#06b6d4" },
               ]}
             />
+
+            {data.trafficSources.length > 0 && (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <DemographicsChart
+                  title="Traffic Sources"
+                  data={data.trafficSources}
+                  color="#6366f1"
+                />
+                <Card>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Traffic Sources Detail</h3>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-gray-200">
+                          <th className="text-left py-3 px-2 font-medium text-gray-500">Source / Medium</th>
+                          <th className="text-right py-3 px-2 font-medium text-gray-500">Sessions</th>
+                          <th className="text-right py-3 px-2 font-medium text-gray-500">Users</th>
+                          <th className="text-right py-3 px-2 font-medium text-gray-500">Bounce Rate</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {data.trafficSources.map((row, i) => (
+                          <tr key={row.dimension} className={i % 2 === 0 ? "bg-gray-50" : "bg-white"}>
+                            <td className="py-2 px-2 text-gray-900 max-w-xs truncate">{row.dimension}</td>
+                            <td className="py-2 px-2 text-right text-gray-700">{row.sessions.toLocaleString()}</td>
+                            <td className="py-2 px-2 text-right text-gray-700">{row.users.toLocaleString()}</td>
+                            <td className="py-2 px-2 text-right text-gray-700">{(row.bounceRate * 100).toFixed(1)}%</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </Card>
+              </div>
+            )}
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <DemographicsChart
@@ -141,6 +223,40 @@ export default function AnalyticsPage() {
                 color="#10b981"
               />
             </div>
+
+            {data.landingPages.length > 0 && (
+              <Card>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Landing Pages</h3>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-gray-200">
+                        <th className="text-left py-3 px-2 font-medium text-gray-500">Landing Page</th>
+                        <th className="text-right py-3 px-2 font-medium text-gray-500">Sessions</th>
+                        <th className="text-right py-3 px-2 font-medium text-gray-500">Bounce Rate</th>
+                        <th className="text-right py-3 px-2 font-medium text-gray-500">Avg. Duration</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {data.landingPages.map((row, i) => {
+                        const mins = Math.floor(row.avgSessionDuration / 60);
+                        const secs = Math.round(row.avgSessionDuration % 60);
+                        const duration = mins > 0 ? `${mins}m ${secs}s` : `${secs}s`;
+
+                        return (
+                          <tr key={row.page} className={i % 2 === 0 ? "bg-gray-50" : "bg-white"}>
+                            <td className="py-2 px-2 text-gray-900 max-w-xs truncate">{row.page}</td>
+                            <td className="py-2 px-2 text-right text-gray-700">{row.sessions.toLocaleString()}</td>
+                            <td className="py-2 px-2 text-right text-gray-700">{(row.bounceRate * 100).toFixed(1)}%</td>
+                            <td className="py-2 px-2 text-right text-gray-700">{duration}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </Card>
+            )}
 
             <PagesTable
               title="Top Pages (GA4)"

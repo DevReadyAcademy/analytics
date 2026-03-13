@@ -39,6 +39,20 @@ export interface GAPageRow {
   avgEngagementTime: number;
 }
 
+export interface GATrafficSourceRow {
+  dimension: string;
+  sessions: number;
+  users: number;
+  bounceRate: number;
+}
+
+export interface GALandingPageRow {
+  page: string;
+  sessions: number;
+  bounceRate: number;
+  avgSessionDuration: number;
+}
+
 export async function getOverviewMetrics(
   startDate: string,
   endDate: string
@@ -138,5 +152,59 @@ export async function getTopPages(
         avgEngagementTime: users > 0 ? totalEngagement / users : 0,
       };
     }) ?? []
+  );
+}
+
+export async function getTrafficSources(
+  startDate: string,
+  endDate: string
+): Promise<GATrafficSourceRow[]> {
+  const [response] = await analyticsClient.runReport({
+    property: `properties/${propertyId}`,
+    dateRanges: [{ startDate, endDate }],
+    dimensions: [{ name: "sessionSourceMedium" }],
+    metrics: [
+      { name: "sessions" },
+      { name: "totalUsers" },
+      { name: "bounceRate" },
+    ],
+    orderBys: [{ metric: { metricName: "sessions" }, desc: true }],
+    limit: 10,
+  });
+
+  return (
+    response.rows?.map((row) => ({
+      dimension: row.dimensionValues?.[0]?.value ?? "(unknown)",
+      sessions: Number(row.metricValues?.[0]?.value ?? 0),
+      users: Number(row.metricValues?.[1]?.value ?? 0),
+      bounceRate: Number(row.metricValues?.[2]?.value ?? 0),
+    })) ?? []
+  );
+}
+
+export async function getLandingPages(
+  startDate: string,
+  endDate: string
+): Promise<GALandingPageRow[]> {
+  const [response] = await analyticsClient.runReport({
+    property: `properties/${propertyId}`,
+    dateRanges: [{ startDate, endDate }],
+    dimensions: [{ name: "landingPage" }],
+    metrics: [
+      { name: "sessions" },
+      { name: "bounceRate" },
+      { name: "averageSessionDuration" },
+    ],
+    orderBys: [{ metric: { metricName: "sessions" }, desc: true }],
+    limit: 20,
+  });
+
+  return (
+    response.rows?.map((row) => ({
+      page: row.dimensionValues?.[0]?.value ?? "",
+      sessions: Number(row.metricValues?.[0]?.value ?? 0),
+      bounceRate: Number(row.metricValues?.[1]?.value ?? 0),
+      avgSessionDuration: Number(row.metricValues?.[2]?.value ?? 0),
+    })) ?? []
   );
 }

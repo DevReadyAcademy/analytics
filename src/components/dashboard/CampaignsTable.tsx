@@ -8,6 +8,7 @@ interface Campaign {
   ctr: number;
   cpc: number;
   conversions: number;
+  cpa: number;
 }
 
 interface CampaignsTableProps {
@@ -45,6 +46,9 @@ export default function CampaignsTable({ data }: CampaignsTableProps) {
               <th className="text-right py-3 px-2 font-medium text-gray-500">
                 Conversions
               </th>
+              <th className="text-right py-3 px-2 font-medium text-gray-500">
+                CPA
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -73,6 +77,9 @@ export default function CampaignsTable({ data }: CampaignsTableProps) {
                 </td>
                 <td className="py-2 px-2 text-right text-gray-700">
                   {row.conversions}
+                </td>
+                <td className="py-2 px-2 text-right text-gray-700">
+                  {row.cpa > 0 ? `\u20AC${row.cpa.toFixed(2)}` : "\u2014"}
                 </td>
               </tr>
             ))}

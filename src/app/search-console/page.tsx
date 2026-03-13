@@ -1,11 +1,13 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { format, subDays } from "date-fns";
+import { format, subDays, differenceInDays } from "date-fns";
 import MetricCard from "@/components/dashboard/MetricCard";
 import TrafficChart from "@/components/dashboard/TrafficChart";
+import DemographicsChart from "@/components/dashboard/DemographicsChart";
 import SearchQueriesTable from "@/components/dashboard/SearchQueriesTable";
 import PagesTable from "@/components/dashboard/PagesTable";
+import OpportunitiesTable from "@/components/dashboard/OpportunitiesTable";
 import DateRangePicker from "@/components/dashboard/DateRangePicker";
 
 interface SCData {
@@ -15,6 +17,12 @@ interface SCData {
     averageCtr: number;
     averagePosition: number;
   };
+  previousMetrics: {
+    totalClicks: number;
+    totalImpressions: number;
+    averageCtr: number;
+    averagePosition: number;
+  } | null;
   timeSeries: Array<{
     date: string;
     clicks: number;
@@ -36,6 +44,16 @@ interface SCData {
     ctr: number;
     position: number;
   }>;
+  devices: Array<{ dimension: string; sessions: number; users: number }>;
+  countries: Array<{ dimension: string; sessions: number; users: number }>;
+  opportunities: Array<{
+    query: string;
+    clicks: number;
+    impressions: number;
+    ctr: number;
+    position: number;
+    estimatedMissedClicks: number;
+  }>;
 }
 
 export default function SearchConsolePage() {
@@ -51,10 +69,19 @@ export default function SearchConsolePage() {
     setLoading(true);
     setError(null);
 
-    const params = new URLSearchParams({ startDate, endDate });
+    const days = differenceInDays(new Date(endDate), new Date(startDate));
+    const compareEndDate = format(subDays(new Date(startDate), 1), "yyyy-MM-dd");
+    const compareStartDate = format(subDays(new Date(compareEndDate), days), "yyyy-MM-dd");
+
+    const params = new URLSearchParams({
+      startDate,
+      endDate,
+      compareStartDate,
+      compareEndDate,
+    });
 
     try {
-      const res = await fetch(`/api/search-console?${params}`);
+      const res = await fetch(`/api/search-console?${params}`, { cache: "no-store" });
       if (!res.ok) throw new Error("Failed to fetch Search Console data");
       setData(await res.json());
     } catch (err: unknown) {
@@ -72,6 +99,8 @@ export default function SearchConsolePage() {
     setStartDate(start);
     setEndDate(end);
   };
+
+  const prev = data?.previousMetrics;
 
   return (
     <div className="space-y-8">
@@ -102,20 +131,25 @@ export default function SearchConsolePage() {
               <MetricCard
                 title="Total Clicks"
                 value={data.metrics.totalClicks}
+                previousValue={prev?.totalClicks}
               />
               <MetricCard
                 title="Total Impressions"
                 value={data.metrics.totalImpressions}
+                previousValue={prev?.totalImpressions}
               />
               <MetricCard
                 title="Average CTR"
                 value={data.metrics.averageCtr}
                 format="percent"
+                previousValue={prev?.averageCtr}
               />
               <MetricCard
                 title="Average Position"
                 value={data.metrics.averagePosition}
                 format="decimal"
+                previousValue={prev?.averagePosition}
+                invertColor
               />
             </div>
 
@@ -127,6 +161,25 @@ export default function SearchConsolePage() {
                 { key: "impressions", label: "Impressions", color: "#f59e0b" },
               ]}
             />
+
+            {(data.devices.length > 0 || data.countries.length > 0) && (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <DemographicsChart
+                  title="Search by Device"
+                  data={data.devices}
+                  color="#6366f1"
+                />
+                <DemographicsChart
+                  title="Search by Country"
+                  data={data.countries}
+                  color="#10b981"
+                />
+              </div>
+            )}
+
+            {data.opportunities.length > 0 && (
+              <OpportunitiesTable data={data.opportunities} />
+            )}
 
             <SearchQueriesTable data={data.queries} />
 

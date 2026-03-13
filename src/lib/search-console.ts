@@ -46,6 +46,21 @@ export interface SCPageRow {
   position: number;
 }
 
+export interface SCDimensionRow {
+  dimension: string;
+  sessions: number;
+  users: number;
+}
+
+export interface SCOpportunity {
+  query: string;
+  clicks: number;
+  impressions: number;
+  ctr: number;
+  position: number;
+  estimatedMissedClicks: number;
+}
+
 export async function getSearchMetrics(
   startDate: string,
   endDate: string
@@ -152,4 +167,92 @@ export async function getTopSearchPages(
       position: row.position ?? 0,
     })) ?? []
   );
+}
+
+export async function getSearchByDevice(
+  startDate: string,
+  endDate: string
+): Promise<SCDimensionRow[]> {
+  const response = await searchConsole.searchanalytics.query({
+    siteUrl,
+    requestBody: {
+      startDate,
+      endDate,
+      dimensions: ["device"],
+    },
+  });
+
+  return (
+    response.data.rows?.map((row) => ({
+      dimension: row.keys?.[0] ?? "",
+      sessions: row.clicks ?? 0,
+      users: row.impressions ?? 0,
+    })) ?? []
+  );
+}
+
+export async function getSearchByCountry(
+  startDate: string,
+  endDate: string
+): Promise<SCDimensionRow[]> {
+  const response = await searchConsole.searchanalytics.query({
+    siteUrl,
+    requestBody: {
+      startDate,
+      endDate,
+      dimensions: ["country"],
+      rowLimit: 10,
+    },
+  });
+
+  return (
+    response.data.rows?.map((row) => ({
+      dimension: row.keys?.[0] ?? "",
+      sessions: row.clicks ?? 0,
+      users: row.impressions ?? 0,
+    })) ?? []
+  );
+}
+
+export async function getSEOOpportunities(
+  startDate: string,
+  endDate: string
+): Promise<SCOpportunity[]> {
+  const response = await searchConsole.searchanalytics.query({
+    siteUrl,
+    requestBody: {
+      startDate,
+      endDate,
+      dimensions: ["query"],
+      rowLimit: 50,
+    },
+  });
+
+  const rows = response.data.rows ?? [];
+
+  return rows
+    .filter(
+      (row) =>
+        (row.impressions ?? 0) > 10 &&
+        (row.ctr ?? 0) < 0.03 &&
+        (row.position ?? 99) <= 20
+    )
+    .map((row) => {
+      const impressions = row.impressions ?? 0;
+      const ctr = row.ctr ?? 0;
+      const avgCtrForPosition = 0.05;
+      const estimatedMissedClicks = Math.round(
+        impressions * (avgCtrForPosition - ctr)
+      );
+
+      return {
+        query: row.keys?.[0] ?? "",
+        clicks: row.clicks ?? 0,
+        impressions,
+        ctr,
+        position: row.position ?? 0,
+        estimatedMissedClicks: Math.max(0, estimatedMissedClicks),
+      };
+    })
+    .sort((a, b) => b.impressions - a.impressions);
 }
