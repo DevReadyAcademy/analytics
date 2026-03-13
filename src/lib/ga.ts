@@ -18,6 +18,10 @@ export interface GAMetrics {
   pageviews: number;
   bounceRate: number;
   avgSessionDuration: number;
+  engagementRate: number;
+  engagedSessions: number;
+  conversions: number;
+  sessionConversionRate: number;
 }
 
 export interface GATimeSeriesRow {
@@ -53,6 +57,18 @@ export interface GALandingPageRow {
   avgSessionDuration: number;
 }
 
+export interface GANewVsReturningRow {
+  userType: string;
+  users: number;
+  sessions: number;
+}
+
+export interface GAChannelGroupRow {
+  channel: string;
+  sessions: number;
+  users: number;
+}
+
 export async function getOverviewMetrics(
   startDate: string,
   endDate: string
@@ -66,6 +82,10 @@ export async function getOverviewMetrics(
       { name: "screenPageViews" },
       { name: "bounceRate" },
       { name: "averageSessionDuration" },
+      { name: "engagementRate" },
+      { name: "engagedSessions" },
+      { name: "conversions" },
+      { name: "sessionConversionRate" },
     ],
   });
 
@@ -76,6 +96,10 @@ export async function getOverviewMetrics(
     pageviews: Number(row?.metricValues?.[2]?.value ?? 0),
     bounceRate: Number(row?.metricValues?.[3]?.value ?? 0),
     avgSessionDuration: Number(row?.metricValues?.[4]?.value ?? 0),
+    engagementRate: Number(row?.metricValues?.[5]?.value ?? 0),
+    engagedSessions: Number(row?.metricValues?.[6]?.value ?? 0),
+    conversions: Number(row?.metricValues?.[7]?.value ?? 0),
+    sessionConversionRate: Number(row?.metricValues?.[8]?.value ?? 0),
   };
 }
 
@@ -205,6 +229,48 @@ export async function getLandingPages(
       sessions: Number(row.metricValues?.[0]?.value ?? 0),
       bounceRate: Number(row.metricValues?.[1]?.value ?? 0),
       avgSessionDuration: Number(row.metricValues?.[2]?.value ?? 0),
+    })) ?? []
+  );
+}
+
+export async function getNewVsReturning(
+  startDate: string,
+  endDate: string
+): Promise<GANewVsReturningRow[]> {
+  const [response] = await analyticsClient.runReport({
+    property: `properties/${propertyId}`,
+    dateRanges: [{ startDate, endDate }],
+    dimensions: [{ name: "newVsReturning" }],
+    metrics: [{ name: "totalUsers" }, { name: "sessions" }],
+  });
+
+  return (
+    response.rows?.map((row) => ({
+      userType: row.dimensionValues?.[0]?.value ?? "",
+      users: Number(row.metricValues?.[0]?.value ?? 0),
+      sessions: Number(row.metricValues?.[1]?.value ?? 0),
+    })) ?? []
+  );
+}
+
+export async function getChannelGrouping(
+  startDate: string,
+  endDate: string
+): Promise<GAChannelGroupRow[]> {
+  const [response] = await analyticsClient.runReport({
+    property: `properties/${propertyId}`,
+    dateRanges: [{ startDate, endDate }],
+    dimensions: [{ name: "sessionDefaultChannelGroup" }],
+    metrics: [{ name: "sessions" }, { name: "totalUsers" }],
+    orderBys: [{ metric: { metricName: "sessions" }, desc: true }],
+    limit: 10,
+  });
+
+  return (
+    response.rows?.map((row) => ({
+      channel: row.dimensionValues?.[0]?.value ?? "",
+      sessions: Number(row.metricValues?.[0]?.value ?? 0),
+      users: Number(row.metricValues?.[1]?.value ?? 0),
     })) ?? []
   );
 }

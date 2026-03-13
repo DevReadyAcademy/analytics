@@ -16,6 +16,8 @@ export interface MetaAdsMetrics {
   frequency: number;
   cpa: number;
   costPerLinkClick: number;
+  revenue: number;
+  roas: number;
 }
 
 export interface MetaAdsTimeSeriesRow {
@@ -23,6 +25,8 @@ export interface MetaAdsTimeSeriesRow {
   spend: number;
   impressions: number;
   clicks: number;
+  cpc: number;
+  cpm: number;
 }
 
 export interface MetaAdsCreative {
@@ -47,6 +51,18 @@ export interface MetaAdsCampaign {
   cpc: number;
   conversions: number;
   cpa: number;
+  roas: number;
+}
+
+export interface PlacementRow {
+  platform: string;
+  placement: string;
+  spend: number;
+  impressions: number;
+  clicks: number;
+  ctr: number;
+  cpc: number;
+  conversions: number;
 }
 
 export interface AgeGenderRow {
@@ -115,13 +131,23 @@ function extractLinkClicks(actions: Array<{ action_type: string; value: string }
   );
 }
 
+function extractRevenue(actionValues: Array<{ action_type: string; value: string }> | undefined): number {
+  return (actionValues ?? [])
+    .filter((a) =>
+      conversionTypes.some(
+        (t) => a.action_type === t || a.action_type.startsWith(`${t}.`)
+      )
+    )
+    .reduce((sum, a) => sum + Number(a.value ?? 0), 0);
+}
+
 export async function getAdsOverview(
   startDate: string,
   endDate: string
 ): Promise<MetaAdsMetrics> {
   const data = await fetchMetaAds(`act_${accountId}/insights`, {
     fields:
-      "spend,impressions,clicks,ctr,cpc,cpm,reach,actions",
+      "spend,impressions,clicks,ctr,cpc,cpm,reach,actions,action_values",
     time_range: JSON.stringify({
       since: startDate,
       until: endDate,
@@ -143,11 +169,14 @@ export async function getAdsOverview(
       frequency: 0,
       cpa: 0,
       costPerLinkClick: 0,
+      revenue: 0,
+      roas: 0,
     };
   }
 
   const conversions = extractConversions(row.actions);
   const linkClicks = extractLinkClicks(row.actions);
+  const revenue = extractRevenue(row.action_values);
   const spend = Number(row.spend ?? 0);
 
   return {
@@ -165,6 +194,8 @@ export async function getAdsOverview(
       : 0,
     cpa: conversions > 0 ? spend / conversions : 0,
     costPerLinkClick: linkClicks > 0 ? spend / linkClicks : 0,
+    revenue,
+    roas: spend > 0 ? revenue / spend : 0,
   };
 }
 
@@ -188,12 +219,19 @@ export async function getAdsTimeSeries(
         spend: string;
         impressions: string;
         clicks: string;
-      }) => ({
-        date: row.date_start,
-        spend: Number(row.spend ?? 0),
-        impressions: Number(row.impressions ?? 0),
-        clicks: Number(row.clicks ?? 0),
-      })
+      }) => {
+        const spend = Number(row.spend ?? 0);
+        const impressions = Number(row.impressions ?? 0);
+        const clicks = Number(row.clicks ?? 0);
+        return {
+          date: row.date_start,
+          spend,
+          impressions,
+          clicks,
+          cpc: clicks > 0 ? spend / clicks : 0,
+          cpm: impressions > 0 ? (spend / impressions) * 1000 : 0,
+        };
+      }
     ) ?? []
   );
 }
@@ -204,7 +242,7 @@ export async function getCampaigns(
 ): Promise<MetaAdsCampaign[]> {
   const data = await fetchMetaAds(`act_${accountId}/insights`, {
     fields:
-      "campaign_name,spend,impressions,clicks,ctr,cpc,actions",
+      "campaign_name,spend,impressions,clicks,ctr,cpc,actions,action_values",
     time_range: JSON.stringify({
       since: startDate,
       until: endDate,
@@ -223,8 +261,10 @@ export async function getCampaigns(
         ctr: string;
         cpc: string;
         actions?: Array<{ action_type: string; value: string }>;
+        action_values?: Array<{ action_type: string; value: string }>;
       }) => {
         const conversions = extractConversions(row.actions);
+        const revenue = extractRevenue(row.action_values);
         const spend = Number(row.spend ?? 0);
 
         return {
@@ -237,6 +277,7 @@ export async function getCampaigns(
           cpc: Number(row.cpc ?? 0),
           conversions,
           cpa: conversions > 0 ? spend / conversions : 0,
+          roas: spend > 0 ? revenue / spend : 0,
         };
       }
     ) ?? []
@@ -420,6 +461,42 @@ export async function getFrequencyDistribution(
         impressions: Number(row.impressions ?? 0),
         clicks: Number(row.clicks ?? 0),
         ctr: Number(row.ctr ?? 0),
+      })
+    ) ?? []
+  );
+}
+
+export async function getPlacementBreakdown(
+  startDate: string,
+  endDate: string
+): Promise<PlacementRow[]> {
+  const data = await fetchMetaAds(`act_${accountId}/insights`, {
+    fields: "spend,impressions,clicks,ctr,cpc,actions",
+    time_range: JSON.stringify({ since: startDate, until: endDate }),
+    breakdowns: "publisher_platform,platform_position",
+    limit: "30",
+  });
+
+  return (
+    data.data?.map(
+      (row: {
+        publisher_platform: string;
+        platform_position: string;
+        spend: string;
+        impressions: string;
+        clicks: string;
+        ctr: string;
+        cpc: string;
+        actions?: Array<{ action_type: string; value: string }>;
+      }) => ({
+        platform: row.publisher_platform,
+        placement: row.platform_position,
+        spend: Number(row.spend ?? 0),
+        impressions: Number(row.impressions ?? 0),
+        clicks: Number(row.clicks ?? 0),
+        ctr: Number(row.ctr ?? 0),
+        cpc: Number(row.cpc ?? 0),
+        conversions: extractConversions(row.actions),
       })
     ) ?? []
   );

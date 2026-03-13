@@ -7,6 +7,7 @@ import {
   getAgeGenderBreakdown,
   getPlatformBreakdown,
   getFrequencyDistribution,
+  getPlacementBreakdown,
 } from "@/lib/meta-ads";
 
 export async function GET(request: NextRequest) {
@@ -18,7 +19,7 @@ export async function GET(request: NextRequest) {
   const compareEndDate = searchParams.get("compareEndDate");
 
   try {
-    const [metrics, timeSeries, campaigns, creatives, ageGender, platforms, frequency] = await Promise.all([
+    const [metrics, timeSeries, campaigns, creatives, ageGender, platforms, frequency, placements] = await Promise.all([
       getAdsOverview(startDate, endDate),
       getAdsTimeSeries(startDate, endDate),
       getCampaigns(startDate, endDate),
@@ -26,6 +27,7 @@ export async function GET(request: NextRequest) {
       getAgeGenderBreakdown(startDate, endDate),
       getPlatformBreakdown(startDate, endDate),
       getFrequencyDistribution(startDate, endDate),
+      getPlacementBreakdown(startDate, endDate),
     ]);
 
     let previousMetrics = null;
@@ -42,6 +44,7 @@ export async function GET(request: NextRequest) {
       ageGender,
       platforms,
       frequency,
+      placements,
     });
   } catch (error) {
     console.error("Meta Ads API error:", error);

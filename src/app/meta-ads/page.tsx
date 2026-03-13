@@ -9,6 +9,7 @@ import CreativesTable from "@/components/dashboard/CreativesTable";
 import DemographicsChart from "@/components/dashboard/DemographicsChart";
 import AudienceBreakdownChart from "@/components/dashboard/AudienceBreakdownChart";
 import FrequencyChart from "@/components/dashboard/FrequencyChart";
+import PlacementTable from "@/components/dashboard/PlacementTable";
 import DateRangePicker from "@/components/dashboard/DateRangePicker";
 
 interface MetaAdsData {
@@ -25,6 +26,8 @@ interface MetaAdsData {
     frequency: number;
     cpa: number;
     costPerLinkClick: number;
+    revenue: number;
+    roas: number;
   };
   previousMetrics: {
     spend: number;
@@ -39,12 +42,16 @@ interface MetaAdsData {
     frequency: number;
     cpa: number;
     costPerLinkClick: number;
+    revenue: number;
+    roas: number;
   } | null;
   timeSeries: Array<{
     date: string;
     spend: number;
     impressions: number;
     clicks: number;
+    cpc: number;
+    cpm: number;
   }>;
   campaigns: Array<{
     campaignName: string;
@@ -55,6 +62,7 @@ interface MetaAdsData {
     cpc: number;
     conversions: number;
     cpa: number;
+    roas: number;
   }>;
   creatives: Array<{
     adName: string;
@@ -82,6 +90,16 @@ interface MetaAdsData {
     impressions: number;
     clicks: number;
     ctr: number;
+  }>;
+  placements: Array<{
+    platform: string;
+    placement: string;
+    spend: number;
+    impressions: number;
+    clicks: number;
+    ctr: number;
+    cpc: number;
+    conversions: number;
   }>;
 }
 
@@ -154,7 +172,7 @@ export default function MetaAdsPage() {
           <LoadingPlaceholder />
         ) : data ? (
           <div className="space-y-6">
-            <div className="grid grid-cols-3 md:grid-cols-5 gap-3">
+            <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
               <MetricCard
                 title="Total Spend"
                 value={data.metrics.spend}
@@ -183,6 +201,11 @@ export default function MetaAdsPage() {
                 value={data.metrics.reach}
                 previousValue={prev?.reach}
               />
+              <MetricCard
+                title="ROAS"
+                value={data.metrics.roas > 0 ? data.metrics.roas.toFixed(2) + "x" : "N/A"}
+                tooltip="Return on Ad Spend. Configure conversion values in Meta to activate."
+              />
             </div>
             <div className="grid grid-cols-3 md:grid-cols-5 gap-3">
               <MetricCard
@@ -198,6 +221,8 @@ export default function MetaAdsPage() {
                 format="percent_raw"
                 tooltip="Click-Through Rate — percentage of impressions that resulted in a click"
                 previousValue={prev?.ctr}
+                target={1.5}
+                targetLabel="1.5% industry avg"
               />
               <MetricCard
                 title="CPC"
@@ -206,6 +231,8 @@ export default function MetaAdsPage() {
                 tooltip="Cost Per Click — average cost for each click on your ad"
                 previousValue={prev?.cpc}
                 invertColor
+                target={0.5}
+                targetLabel="\u20ac0.50 target"
               />
               <MetricCard
                 title="CPM"
@@ -230,6 +257,8 @@ export default function MetaAdsPage() {
                 tooltip="Cost Per Acquisition — spend / conversions"
                 previousValue={prev?.cpa}
                 invertColor
+                target={15}
+                targetLabel="\u20ac15.00 target"
               />
               <MetricCard
                 title="Cost/Link Click"
@@ -250,6 +279,15 @@ export default function MetaAdsPage() {
               ]}
             />
 
+            <TrafficChart
+              title="Cost Trends (CPC & CPM)"
+              data={data.timeSeries}
+              lines={[
+                { key: "cpc", label: "CPC (\u20ac)", color: "#f59e0b" },
+                { key: "cpm", label: "CPM (\u20ac)", color: "#ef4444" },
+              ]}
+            />
+
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <AudienceBreakdownChart data={data.ageGender} />
               <DemographicsChart
@@ -262,6 +300,10 @@ export default function MetaAdsPage() {
             <FrequencyChart data={data.frequency} />
 
             <CampaignsTable data={data.campaigns} />
+
+            {data.placements.length > 0 && (
+              <PlacementTable data={data.placements} />
+            )}
 
             <CreativesTable data={data.creatives} />
           </div>

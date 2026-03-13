@@ -6,6 +6,7 @@ import {
   getTopPages,
   getTrafficSources,
   getLandingPages,
+  getNewVsReturning,
 } from "@/lib/ga";
 
 export async function GET(request: NextRequest) {
@@ -16,7 +17,7 @@ export async function GET(request: NextRequest) {
   const compareEndDate = searchParams.get("compareEndDate");
 
   try {
-    const [metrics, timeSeries, countries, cities, devices, browsers, pages, trafficSources, landingPages] =
+    const [metrics, timeSeries, countries, cities, devices, browsers, pages, trafficSources, landingPages, newVsReturning] =
       await Promise.all([
         getOverviewMetrics(startDate, endDate),
         getTimeSeries(startDate, endDate),
@@ -27,6 +28,7 @@ export async function GET(request: NextRequest) {
         getTopPages(startDate, endDate),
         getTrafficSources(startDate, endDate),
         getLandingPages(startDate, endDate),
+        getNewVsReturning(startDate, endDate),
       ]);
 
     let previousMetrics = null;
@@ -42,6 +44,7 @@ export async function GET(request: NextRequest) {
       pages,
       trafficSources,
       landingPages,
+      newVsReturning,
     });
   } catch (error) {
     console.error("GA4 API error:", error);

@@ -7,6 +7,7 @@ import {
   getSearchByDevice,
   getSearchByCountry,
   getSEOOpportunities,
+  getPageOpportunities,
 } from "@/lib/search-console";
 
 export async function GET(request: NextRequest) {
@@ -17,7 +18,7 @@ export async function GET(request: NextRequest) {
   const compareEndDate = searchParams.get("compareEndDate");
 
   try {
-    const [metrics, timeSeries, queries, pages, devices, countries, opportunities] = await Promise.all([
+    const [metrics, timeSeries, queries, pages, devices, countries, opportunities, pageOpportunities] = await Promise.all([
       getSearchMetrics(startDate, endDate),
       getSearchTimeSeries(startDate, endDate),
       getTopQueries(startDate, endDate),
@@ -25,6 +26,7 @@ export async function GET(request: NextRequest) {
       getSearchByDevice(startDate, endDate),
       getSearchByCountry(startDate, endDate),
       getSEOOpportunities(startDate, endDate),
+      getPageOpportunities(startDate, endDate),
     ]);
 
     let previousMetrics = null;
@@ -41,6 +43,7 @@ export async function GET(request: NextRequest) {
       devices,
       countries,
       opportunities,
+      pageOpportunities,
     });
   } catch (error) {
     console.error("Search Console API error:", error);

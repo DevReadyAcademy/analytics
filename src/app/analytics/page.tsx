@@ -7,6 +7,7 @@ import TrafficChart from "@/components/dashboard/TrafficChart";
 import DemographicsChart from "@/components/dashboard/DemographicsChart";
 import PagesTable from "@/components/dashboard/PagesTable";
 import DateRangePicker from "@/components/dashboard/DateRangePicker";
+import NewVsReturningChart from "@/components/dashboard/NewVsReturningChart";
 import Card from "@/components/ui/Card";
 
 interface GATrafficSourceRow {
@@ -30,6 +31,10 @@ interface GAData {
     pageviews: number;
     bounceRate: number;
     avgSessionDuration: number;
+    engagementRate: number;
+    engagedSessions: number;
+    conversions: number;
+    sessionConversionRate: number;
   };
   previousMetrics: {
     totalUsers: number;
@@ -37,7 +42,12 @@ interface GAData {
     pageviews: number;
     bounceRate: number;
     avgSessionDuration: number;
+    engagementRate: number;
+    engagedSessions: number;
+    conversions: number;
+    sessionConversionRate: number;
   } | null;
+  newVsReturning: Array<{ userType: string; users: number; sessions: number }>;
   timeSeries: Array<{ date: string; sessions: number; users: number }>;
   demographics: {
     countries: Array<{ dimension: string; sessions: number; users: number }>;
@@ -126,7 +136,7 @@ export default function AnalyticsPage() {
           <LoadingPlaceholder />
         ) : data ? (
           <div className="space-y-6">
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-4">
               <MetricCard
                 title="Total Users"
                 value={data.metrics.totalUsers}
@@ -143,6 +153,23 @@ export default function AnalyticsPage() {
                 previousValue={prev?.pageviews}
               />
               <MetricCard
+                title="Avg. Session Duration"
+                value={data.metrics.avgSessionDuration}
+                format="duration"
+                previousValue={prev?.avgSessionDuration}
+              />
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-4">
+              <MetricCard
+                title="Engagement Rate"
+                value={data.metrics.engagementRate}
+                format="percent"
+                tooltip="% of sessions lasting >10s, 2+ pageviews, or a conversion"
+                previousValue={prev?.engagementRate}
+                target={0.6}
+                targetLabel="60% target"
+              />
+              <MetricCard
                 title="Bounce Rate"
                 value={data.metrics.bounceRate}
                 format="percent"
@@ -150,10 +177,19 @@ export default function AnalyticsPage() {
                 invertColor
               />
               <MetricCard
-                title="Avg. Session Duration"
-                value={data.metrics.avgSessionDuration}
-                format="duration"
-                previousValue={prev?.avgSessionDuration}
+                title="Conversions"
+                value={data.metrics.conversions}
+                tooltip="Key events configured in GA4"
+                previousValue={prev?.conversions}
+              />
+              <MetricCard
+                title="Conversion Rate"
+                value={data.metrics.sessionConversionRate}
+                format="percent"
+                tooltip="% of sessions with a conversion event"
+                previousValue={prev?.sessionConversionRate}
+                target={0.03}
+                targetLabel="3% target"
               />
             </div>
 
@@ -256,6 +292,10 @@ export default function AnalyticsPage() {
                   </table>
                 </div>
               </Card>
+            )}
+
+            {data.newVsReturning.length > 0 && (
+              <NewVsReturningChart data={data.newVsReturning} />
             )}
 
             <PagesTable

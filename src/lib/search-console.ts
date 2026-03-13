@@ -61,6 +61,15 @@ export interface SCOpportunity {
   estimatedMissedClicks: number;
 }
 
+export interface SCPageOpportunity {
+  page: string;
+  clicks: number;
+  impressions: number;
+  ctr: number;
+  position: number;
+  estimatedMissedClicks: number;
+}
+
 export async function getSearchMetrics(
   startDate: string,
   endDate: string
@@ -247,6 +256,49 @@ export async function getSEOOpportunities(
 
       return {
         query: row.keys?.[0] ?? "",
+        clicks: row.clicks ?? 0,
+        impressions,
+        ctr,
+        position: row.position ?? 0,
+        estimatedMissedClicks: Math.max(0, estimatedMissedClicks),
+      };
+    })
+    .sort((a, b) => b.impressions - a.impressions);
+}
+
+export async function getPageOpportunities(
+  startDate: string,
+  endDate: string
+): Promise<SCPageOpportunity[]> {
+  const response = await searchConsole.searchanalytics.query({
+    siteUrl,
+    requestBody: {
+      startDate,
+      endDate,
+      dimensions: ["page"],
+      rowLimit: 50,
+    },
+  });
+
+  const rows = response.data.rows ?? [];
+
+  return rows
+    .filter(
+      (row) =>
+        (row.impressions ?? 0) > 10 &&
+        (row.ctr ?? 0) < 0.03 &&
+        (row.position ?? 99) <= 20
+    )
+    .map((row) => {
+      const impressions = row.impressions ?? 0;
+      const ctr = row.ctr ?? 0;
+      const avgCtrForPosition = 0.05;
+      const estimatedMissedClicks = Math.round(
+        impressions * (avgCtrForPosition - ctr)
+      );
+
+      return {
+        page: row.keys?.[0] ?? "",
         clicks: row.clicks ?? 0,
         impressions,
         ctr,

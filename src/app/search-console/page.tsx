@@ -9,6 +9,7 @@ import SearchQueriesTable from "@/components/dashboard/SearchQueriesTable";
 import PagesTable from "@/components/dashboard/PagesTable";
 import OpportunitiesTable from "@/components/dashboard/OpportunitiesTable";
 import DateRangePicker from "@/components/dashboard/DateRangePicker";
+import Card from "@/components/ui/Card";
 
 interface SCData {
   metrics: {
@@ -48,6 +49,14 @@ interface SCData {
   countries: Array<{ dimension: string; sessions: number; users: number }>;
   opportunities: Array<{
     query: string;
+    clicks: number;
+    impressions: number;
+    ctr: number;
+    position: number;
+    estimatedMissedClicks: number;
+  }>;
+  pageOpportunities: Array<{
+    page: string;
     clicks: number;
     impressions: number;
     ctr: number;
@@ -143,6 +152,8 @@ export default function SearchConsolePage() {
                 value={data.metrics.averageCtr}
                 format="percent"
                 previousValue={prev?.averageCtr}
+                target={0.03}
+                targetLabel="3% target"
               />
               <MetricCard
                 title="Average Position"
@@ -179,6 +190,46 @@ export default function SearchConsolePage() {
 
             {data.opportunities.length > 0 && (
               <OpportunitiesTable data={data.opportunities} />
+            )}
+
+            {data.pageOpportunities.length > 0 && (
+              <Card>
+                <h3 className="text-lg font-semibold text-gray-900 mb-1">
+                  Page-Level SEO Opportunities
+                </h3>
+                <p className="text-xs text-gray-500 mb-4">
+                  Pages ranking in top 20 with high impressions but low CTR (&lt; 3%). Rewrite title tags and meta descriptions for these pages.
+                </p>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-gray-200">
+                        <th className="text-left py-3 px-2 font-medium text-gray-500">Page</th>
+                        <th className="text-right py-3 px-2 font-medium text-gray-500">Impressions</th>
+                        <th className="text-right py-3 px-2 font-medium text-gray-500">Clicks</th>
+                        <th className="text-right py-3 px-2 font-medium text-gray-500">CTR</th>
+                        <th className="text-right py-3 px-2 font-medium text-gray-500">Position</th>
+                        <th className="text-right py-3 px-2 font-medium text-gray-500">Est. Missed Clicks</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {data.pageOpportunities.map((row, i) => (
+                        <tr
+                          key={row.page}
+                          className={`${i % 2 === 0 ? "bg-amber-50" : "bg-white"}`}
+                        >
+                          <td className="py-2 px-2 text-gray-900 max-w-xs truncate">{row.page}</td>
+                          <td className="py-2 px-2 text-right text-gray-700">{row.impressions.toLocaleString()}</td>
+                          <td className="py-2 px-2 text-right text-gray-700">{row.clicks.toLocaleString()}</td>
+                          <td className="py-2 px-2 text-right text-gray-700">{(row.ctr * 100).toFixed(2)}%</td>
+                          <td className="py-2 px-2 text-right text-gray-700">{row.position.toFixed(1)}</td>
+                          <td className="py-2 px-2 text-right font-medium text-amber-700">{row.estimatedMissedClicks.toLocaleString()}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </Card>
             )}
 
             <SearchQueriesTable data={data.queries} />

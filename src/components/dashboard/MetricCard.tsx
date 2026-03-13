@@ -7,6 +7,8 @@ interface MetricCardProps {
   tooltip?: string;
   previousValue?: number;
   invertColor?: boolean;
+  target?: number;
+  targetLabel?: string;
 }
 
 function formatValue(value: string | number, format?: string): string {
@@ -52,7 +54,35 @@ function DeltaBadge({ current, previous, invertColor }: { current: number; previ
   );
 }
 
-export default function MetricCard({ title, value, format, tooltip, previousValue, invertColor }: MetricCardProps) {
+function TargetIndicator({ current, target, label, invertColor }: { current: number; target: number; label?: string; invertColor?: boolean }) {
+  const ratio = invertColor ? target / current : current / target;
+  let color: string;
+  let icon: string;
+
+  if (ratio >= 1) {
+    color = "text-green-600";
+    icon = "\u2713";
+  } else if (ratio >= 0.8) {
+    color = "text-amber-500";
+    icon = "\u25CF";
+  } else {
+    color = "text-red-500";
+    icon = "\u25CF";
+  }
+
+  return (
+    <span className={`relative group inline-flex items-center text-xs font-medium ${color}`}>
+      {icon}
+      {label && (
+        <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 hidden group-hover:block w-32 rounded bg-gray-800 px-2 py-1 text-xs text-white text-center z-10">
+          Target: {label}
+        </span>
+      )}
+    </span>
+  );
+}
+
+export default function MetricCard({ title, value, format, tooltip, previousValue, invertColor, target, targetLabel }: MetricCardProps) {
   const currentNum = typeof value === "string" ? parseFloat(value) : value;
 
   return (
@@ -74,6 +104,9 @@ export default function MetricCard({ title, value, format, tooltip, previousValu
         </p>
         {previousValue !== undefined && (
           <DeltaBadge current={currentNum} previous={previousValue} invertColor={invertColor} />
+        )}
+        {target !== undefined && !isNaN(currentNum) && (
+          <TargetIndicator current={currentNum} target={target} label={targetLabel} invertColor={invertColor} />
         )}
       </div>
     </Card>
