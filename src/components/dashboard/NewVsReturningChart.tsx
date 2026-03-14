@@ -9,6 +9,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import Card from "@/components/ui/Card";
+import ChartHeader from "@/components/ui/ChartHeader";
 
 interface NewVsReturningRow {
   userType: string;
@@ -18,6 +19,7 @@ interface NewVsReturningRow {
 
 interface NewVsReturningChartProps {
   data: NewVsReturningRow[];
+  infoContent?: React.ReactNode;
 }
 
 const COLORS: Record<string, string> = {
@@ -25,24 +27,40 @@ const COLORS: Record<string, string> = {
   returning: "#10b981",
 };
 
-export default function NewVsReturningChart({ data }: NewVsReturningChartProps) {
-  const totalUsers = data.reduce((s, r) => s + r.users, 0);
+export default function NewVsReturningChart({ data, infoContent }: NewVsReturningChartProps) {
+  // Aggregate into exactly two buckets: "New Users" and "Returning Users"
+  let newUsers = 0;
+  let returningUsers = 0;
+  for (const row of data) {
+    if (row.userType === "new") {
+      newUsers += row.users;
+    } else {
+      returningUsers += row.users;
+    }
+  }
+  const totalUsers = newUsers + returningUsers;
 
-  const chartData = data.map((row) => ({
-    name: row.userType === "new" ? "New Users" : "Returning Users",
-    value: row.users,
-    pct: totalUsers > 0 ? ((row.users / totalUsers) * 100).toFixed(1) : "0",
-  }));
+  const chartData = [
+    {
+      name: "New Users",
+      value: newUsers,
+      pct: totalUsers > 0 ? ((newUsers / totalUsers) * 100).toFixed(1) : "0",
+    },
+    {
+      name: "Returning Users",
+      value: returningUsers,
+      pct: totalUsers > 0 ? ((returningUsers / totalUsers) * 100).toFixed(1) : "0",
+    },
+  ].filter((d) => d.value > 0);
 
   return (
     <Card>
-      <h3 className="text-lg font-semibold text-gray-900 mb-1">
-        New vs Returning Users
-      </h3>
-      <p className="text-xs text-gray-500 mb-4">
-        Acquisition vs retention balance. High new % = growth; high returning % = loyalty.
-      </p>
-      <div className="h-64">
+      <ChartHeader
+        title="New vs Returning Users"
+        description="Acquisition vs retention balance. High new % = growth; high returning % = loyalty."
+        infoContent={infoContent}
+      />
+      <div className="h-64 mt-3">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie

@@ -1,6 +1,7 @@
 "use client";
 
 import Card from "@/components/ui/Card";
+import ChartHeader from "@/components/ui/ChartHeader";
 
 interface FunnelStage {
   stage: string;
@@ -9,20 +10,20 @@ interface FunnelStage {
 
 interface FunnelChartProps {
   data: FunnelStage[];
+  infoContent?: React.ReactNode;
 }
 
-export default function FunnelChart({ data }: FunnelChartProps) {
+export default function FunnelChart({ data, infoContent }: FunnelChartProps) {
   const maxValue = Math.max(...data.map((d) => d.value), 1);
 
   return (
     <Card>
-      <h3 className="text-lg font-semibold text-gray-900 mb-1">
-        Cross-Channel Funnel
-      </h3>
-      <p className="text-xs text-gray-500 mb-4">
-        Drop-off from ad impression to conversion. Numbers are directional (Meta + GA4 attribution may differ).
-      </p>
-      <div className="space-y-3">
+      <ChartHeader
+        title="Cross-Channel Funnel"
+        description="Drop-off from ad impression to conversion. Numbers are directional (Meta + GA4 attribution may differ)."
+        infoContent={infoContent}
+      />
+      <div className="space-y-3 mt-3">
         {data.map((stage, i) => {
           const widthPct = Math.max((stage.value / maxValue) * 100, 4);
           const prevValue = i > 0 ? data[i - 1].value : null;

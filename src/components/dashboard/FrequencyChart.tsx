@@ -12,6 +12,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import Card from "@/components/ui/Card";
+import ChartHeader from "@/components/ui/ChartHeader";
 
 interface FrequencyBucket {
   frequency: string;
@@ -23,9 +24,10 @@ interface FrequencyBucket {
 
 interface FrequencyChartProps {
   data: FrequencyBucket[];
+  infoContent?: React.ReactNode;
 }
 
-export default function FrequencyChart({ data }: FrequencyChartProps) {
+export default function FrequencyChart({ data, infoContent }: FrequencyChartProps) {
   const chartData = data.map((d) => ({
     ...d,
     ctrPct: Number(d.ctr),
@@ -33,11 +35,12 @@ export default function FrequencyChart({ data }: FrequencyChartProps) {
 
   return (
     <Card>
-      <h3 className="text-lg font-semibold text-gray-900 mb-1">Frequency Distribution</h3>
-      <p className="text-xs text-gray-500 mb-4">
-        Reach per frequency bucket with CTR overlay — helps detect creative fatigue.
-      </p>
-      <div className="h-72">
+      <ChartHeader
+        title="Frequency Distribution"
+        description="Reach per frequency bucket with CTR overlay — helps detect creative fatigue."
+        infoContent={infoContent}
+      />
+      <div className="h-72 mt-3">
         <ResponsiveContainer width="100%" height="100%">
           <ComposedChart data={chartData}>
             <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />

@@ -10,9 +10,12 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import Card from "@/components/ui/Card";
+import ChartHeader from "@/components/ui/ChartHeader";
 
 interface DemographicsChartProps {
   title: string;
+  description?: string;
+  infoContent?: React.ReactNode;
   data: Array<{
     dimension: string;
     sessions: number;
@@ -23,22 +26,30 @@ interface DemographicsChartProps {
 
 export default function DemographicsChart({
   title,
+  description,
+  infoContent,
   data,
   color = "#6366f1",
 }: DemographicsChartProps) {
+  const labelWidth = Math.min(
+    Math.max(...data.map((d) => d.dimension.length), 0) * 7 + 10,
+    160
+  );
+
   return (
     <Card>
-      <h3 className="text-lg font-semibold text-gray-900 mb-4">{title}</h3>
-      <div className="h-64">
+      <ChartHeader title={title} description={description} infoContent={infoContent} />
+      <div style={{ height: Math.max(data.length * 32, 200) }} className="mt-3">
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={data} layout="vertical" margin={{ left: 80 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+          <BarChart data={data} layout="vertical" margin={{ left: 10, right: 10 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" horizontal={false} />
             <XAxis type="number" tick={{ fontSize: 12 }} />
             <YAxis
               type="category"
               dataKey="dimension"
-              tick={{ fontSize: 12 }}
-              width={80}
+              tick={{ fontSize: 11 }}
+              width={labelWidth}
+              interval={0}
             />
             <Tooltip />
             <Bar dataKey="sessions" name="Sessions" fill={color} radius={[0, 4, 4, 0]} />

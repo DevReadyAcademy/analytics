@@ -11,10 +11,13 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import Card from "@/components/ui/Card";
+import ChartHeader from "@/components/ui/ChartHeader";
 import { format, parse } from "date-fns";
 
 interface TrafficChartProps {
   title: string;
+  description?: string;
+  infoContent?: React.ReactNode;
   data: Array<{
     date: string;
     [key: string]: string | number;
@@ -28,6 +31,8 @@ interface TrafficChartProps {
 
 export default function TrafficChart({
   title,
+  description,
+  infoContent,
   data,
   lines,
 }: TrafficChartProps) {
@@ -38,8 +43,8 @@ export default function TrafficChart({
 
   return (
     <Card>
-      <h3 className="text-lg font-semibold text-gray-900 mb-4">{title}</h3>
-      <div className="h-80">
+      <ChartHeader title={title} description={description} infoContent={infoContent} />
+      <div className="h-80 mt-3">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={formattedData}>
             <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
@@ -72,7 +77,6 @@ export default function TrafficChart({
 
 function formatDate(dateStr: string): string {
   try {
-    // GA4 returns YYYYMMDD, Search Console returns YYYY-MM-DD
     if (dateStr.includes("-")) {
       return format(new Date(dateStr), "MMM d");
     }

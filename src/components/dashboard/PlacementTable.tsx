@@ -1,4 +1,7 @@
+"use client";
+
 import Card from "@/components/ui/Card";
+import ChartHeader from "@/components/ui/ChartHeader";
 
 interface PlacementRow {
   platform: string;
@@ -13,18 +16,18 @@ interface PlacementRow {
 
 interface PlacementTableProps {
   data: PlacementRow[];
+  infoContent?: React.ReactNode;
 }
 
-export default function PlacementTable({ data }: PlacementTableProps) {
+export default function PlacementTable({ data, infoContent }: PlacementTableProps) {
   return (
     <Card>
-      <h3 className="text-lg font-semibold text-gray-900 mb-1">
-        Ad Placement Breakdown
-      </h3>
-      <p className="text-xs text-gray-500 mb-4">
-        Performance by placement (Feed, Stories, Reels, etc.). Guides creative production decisions.
-      </p>
-      <div className="overflow-x-auto">
+      <ChartHeader
+        title="Ad Placement Breakdown"
+        description="Performance by placement (Feed, Stories, Reels, etc.). Guides creative production decisions."
+        infoContent={infoContent}
+      />
+      <div className="overflow-x-auto mt-3">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-gray-200">
@@ -40,10 +43,7 @@ export default function PlacementTable({ data }: PlacementTableProps) {
           </thead>
           <tbody>
             {data.map((row, i) => (
-              <tr
-                key={`${row.platform}-${row.placement}`}
-                className={i % 2 === 0 ? "bg-gray-50" : "bg-white"}
-              >
+              <tr key={`${row.platform}-${row.placement}`} className={i % 2 === 0 ? "bg-gray-50" : "bg-white"}>
                 <td className="py-2 px-2 text-gray-900 capitalize">{row.platform}</td>
                 <td className="py-2 px-2 text-gray-700">{row.placement}</td>
                 <td className="py-2 px-2 text-right text-gray-700">&euro;{row.spend.toFixed(2)}</td>

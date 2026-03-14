@@ -11,6 +11,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import Card from "@/components/ui/Card";
+import ChartHeader from "@/components/ui/ChartHeader";
 
 interface AgeGenderRow {
   age: string;
@@ -23,9 +24,10 @@ interface AgeGenderRow {
 
 interface AudienceBreakdownChartProps {
   data: AgeGenderRow[];
+  infoContent?: React.ReactNode;
 }
 
-export default function AudienceBreakdownChart({ data }: AudienceBreakdownChartProps) {
+export default function AudienceBreakdownChart({ data, infoContent }: AudienceBreakdownChartProps) {
   const grouped: Record<string, { age: string; male: number; female: number; unknown: number }> = {};
 
   for (const row of data) {
@@ -47,8 +49,12 @@ export default function AudienceBreakdownChart({ data }: AudienceBreakdownChartP
 
   return (
     <Card>
-      <h3 className="text-lg font-semibold text-gray-900 mb-4">Audience by Age & Gender</h3>
-      <div className="h-72">
+      <ChartHeader
+        title="Audience by Age & Gender"
+        description="Reach distribution across age groups. Informs targeting and creative decisions."
+        infoContent={infoContent}
+      />
+      <div className="h-72 mt-3">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={chartData}>
             <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />

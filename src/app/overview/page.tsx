@@ -193,7 +193,7 @@ export default function OverviewPage() {
                 title="Site Conversion Rate"
                 value={data.ga.sessionConversionRate}
                 format="percent"
-                tooltip="% of sessions with a key event"
+                tooltip="% of sessions with book_a_call or click events"
                 previousValue={prevGa?.sessionConversionRate}
                 target={0.03}
                 targetLabel="3% target"
@@ -210,37 +210,163 @@ export default function OverviewPage() {
             </div>
 
             {data.funnel.length > 0 && (
-              <FunnelChart data={data.funnel} />
+              <FunnelChart
+                data={data.funnel}
+                infoContent={
+                  <>
+                    <p><strong>What am I looking at?</strong></p>
+                    <p>A cross-channel funnel showing the journey from ad impressions to conversions. Each stage represents a step in the customer journey with the drop-off between stages.</p>
+
+                    <p className="mt-3"><strong>How to read it</strong></p>
+                    <ul className="list-disc pl-4 space-y-1">
+                      <li>The bars shrink at each stage as some users drop off.</li>
+                      <li>The percentage between stages shows the conversion rate from one step to the next.</li>
+                      <li>Numbers are directional (Meta and GA4 have different attribution), but the funnel shape reveals where the biggest drop-offs occur.</li>
+                    </ul>
+
+                    <p className="mt-3"><strong>What to look for</strong></p>
+                    <ul className="list-disc pl-4 space-y-1">
+                      <li><strong>Biggest drop-off</strong> — Where is the funnel leaking most? This is your #1 priority to fix.</li>
+                      <li><strong>Ad Impressions to Link Clicks</strong> — Low? Your ad creative isn&apos;t compelling. Refresh creatives.</li>
+                      <li><strong>Link Clicks to Sessions</strong> — Low? Your landing page is slow or people bounce before it loads.</li>
+                      <li><strong>Sessions to Engaged Sessions</strong> — Low? People land but don&apos;t engage. Check content relevance and page design.</li>
+                      <li><strong>Engaged to Conversions</strong> — Low? Your conversion path is broken. Check forms, CTAs, and the booking flow.</li>
+                    </ul>
+
+                    <p className="mt-3"><strong>Actions you can take</strong></p>
+                    <ul className="list-disc pl-4 space-y-1">
+                      <li>Focus optimization efforts on the stage with the worst conversion rate.</li>
+                      <li>This funnel directly answers &quot;should we fix the ad or the landing page?&quot;</li>
+                      <li>Track funnel improvements period-over-period to validate your changes.</li>
+                    </ul>
+                  </>
+                }
+              />
             )}
 
             {data.channelGrouping.length > 0 && (
-              <ChannelMixChart data={data.channelGrouping} />
+              <ChannelMixChart
+                data={data.channelGrouping}
+                infoContent={
+                  <>
+                    <p><strong>What am I looking at?</strong></p>
+                    <p>How your site sessions are distributed across traffic channels: Paid Social, Organic Search, Direct, Referral, Email, etc. This answers &quot;where should the next euro go?&quot;</p>
+
+                    <p className="mt-3"><strong>How to read it</strong></p>
+                    <p>Each bar represents a channel. Longer bars mean more sessions from that source. The color coding distinguishes channels at a glance.</p>
+
+                    <p className="mt-3"><strong>What to look for</strong></p>
+                    <ul className="list-disc pl-4 space-y-1">
+                      <li><strong>Over-reliance on paid</strong> — If Paid Social dominates, your growth depends on ad spend. One budget cut and traffic collapses.</li>
+                      <li><strong>Organic strength</strong> — High Organic Search sessions mean your SEO investment is paying off. This is &quot;free&quot; traffic.</li>
+                      <li><strong>Direct traffic</strong> — People typing your URL directly. Indicates brand awareness and repeat visitors.</li>
+                      <li><strong>Missing channels</strong> — No email traffic? No referral? These are untapped growth opportunities.</li>
+                    </ul>
+
+                    <p className="mt-3"><strong>Actions you can take</strong></p>
+                    <ul className="list-disc pl-4 space-y-1">
+                      <li>If organic is &lt;20% of total, invest more in content and SEO — it compounds over time.</li>
+                      <li>If paid is &gt;50%, build organic channels to reduce paid dependency.</li>
+                      <li>A healthy mix: aim for no single channel exceeding 40% of total traffic.</li>
+                    </ul>
+                  </>
+                }
+              />
             )}
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <TrafficChart
                 title="Ad Spend & Clicks"
+                description="Daily Meta Ads spend and click volume."
                 data={data.adsTimeSeries}
                 lines={[
                   { key: "clicks", label: "Clicks", color: "#6366f1" },
                   { key: "spend", label: "Spend (\u20ac)", color: "#f43f5e" },
                 ]}
+                infoContent={
+                  <>
+                    <p><strong>What am I looking at?</strong></p>
+                    <p>Daily Meta Ads spend and clicks over the selected period. A quick overview of your paid advertising activity.</p>
+
+                    <p className="mt-3"><strong>How to read it</strong></p>
+                    <p>Purple shows click volume, red shows daily spend. They should move roughly in proportion — when you spend more, you should get more clicks.</p>
+
+                    <p className="mt-3"><strong>What to look for</strong></p>
+                    <ul className="list-disc pl-4 space-y-1">
+                      <li><strong>Widening gap</strong> — Spend growing faster than clicks means declining efficiency.</li>
+                      <li><strong>Flat spend, growing clicks</strong> — Great! You&apos;re getting more efficient.</li>
+                      <li><strong>Sudden zeros</strong> — Campaign may have been paused, or budget may have been depleted.</li>
+                    </ul>
+
+                    <p className="mt-3"><strong>Actions you can take</strong></p>
+                    <ul className="list-disc pl-4 space-y-1">
+                      <li>Visit the Meta Ads page for detailed campaign-level breakdown.</li>
+                      <li>Correlate spend changes with the GA4 sessions chart to see the site-wide impact of ad spend changes.</li>
+                    </ul>
+                  </>
+                }
               />
               <TrafficChart
                 title="Site Sessions & Users"
+                description="Daily GA4 sessions and unique users."
                 data={data.gaTimeSeries}
                 lines={[
                   { key: "sessions", label: "Sessions", color: "#6366f1" },
                   { key: "users", label: "Users", color: "#06b6d4" },
                 ]}
+                infoContent={
+                  <>
+                    <p><strong>What am I looking at?</strong></p>
+                    <p>Daily site sessions and unique users from Google Analytics. Your overall site traffic health at a glance.</p>
+
+                    <p className="mt-3"><strong>How to read it</strong></p>
+                    <p>Purple = sessions (total visits), teal = unique users. The gap between them shows how often users return within the period.</p>
+
+                    <p className="mt-3"><strong>What to look for</strong></p>
+                    <ul className="list-disc pl-4 space-y-1">
+                      <li><strong>Upward trend</strong> — Growing traffic. Correlate with ad spend and organic performance to understand what&apos;s driving growth.</li>
+                      <li><strong>Sessions growing but users flat</strong> — Same people visiting more often. Good for retention, but you&apos;re not reaching new people.</li>
+                      <li><strong>Both declining</strong> — Urgent. Check ad campaigns, SEO rankings, and site uptime.</li>
+                    </ul>
+
+                    <p className="mt-3"><strong>Actions you can take</strong></p>
+                    <ul className="list-disc pl-4 space-y-1">
+                      <li>Visit the Google Analytics page for detailed breakdowns by source, device, and geography.</li>
+                      <li>Compare this trend with the ad spend chart — are traffic dips aligned with reduced spend?</li>
+                    </ul>
+                  </>
+                }
               />
               <TrafficChart
                 title="Organic Clicks & Impressions"
+                description="Daily Search Console organic performance."
                 data={data.scTimeSeries}
                 lines={[
                   { key: "clicks", label: "Clicks", color: "#10b981" },
                   { key: "impressions", label: "Impressions", color: "#f59e0b" },
                 ]}
+                infoContent={
+                  <>
+                    <p><strong>What am I looking at?</strong></p>
+                    <p>Daily organic search clicks and impressions from Google Search Console. Your SEO performance trend.</p>
+
+                    <p className="mt-3"><strong>How to read it</strong></p>
+                    <p>Green = organic clicks (visitors from search), amber = impressions (times you appeared in search results). The ratio between them is your organic CTR.</p>
+
+                    <p className="mt-3"><strong>What to look for</strong></p>
+                    <ul className="list-disc pl-4 space-y-1">
+                      <li><strong>Growing impressions</strong> — Google is showing your site more often. Your content is gaining visibility.</li>
+                      <li><strong>Impressions up, clicks flat</strong> — You appear in search but people don&apos;t click. Improve title tags and meta descriptions.</li>
+                      <li><strong>Seasonal patterns</strong> — Some industries have natural search volume cycles. Know your seasonal baseline.</li>
+                    </ul>
+
+                    <p className="mt-3"><strong>Actions you can take</strong></p>
+                    <ul className="list-disc pl-4 space-y-1">
+                      <li>Visit the Search Console page for detailed query and page-level breakdowns.</li>
+                      <li>Compare organic trends with paid — if organic grows while paid spend is flat, your SEO investment is working.</li>
+                    </ul>
+                  </>
+                }
               />
             </div>
 

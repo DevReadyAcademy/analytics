@@ -1,4 +1,7 @@
+"use client";
+
 import Card from "@/components/ui/Card";
+import ChartHeader from "@/components/ui/ChartHeader";
 
 interface Opportunity {
   query: string;
@@ -11,18 +14,18 @@ interface Opportunity {
 
 interface OpportunitiesTableProps {
   data: Opportunity[];
+  infoContent?: React.ReactNode;
 }
 
-export default function OpportunitiesTable({ data }: OpportunitiesTableProps) {
+export default function OpportunitiesTable({ data, infoContent }: OpportunitiesTableProps) {
   return (
     <Card>
-      <h3 className="text-lg font-semibold text-gray-900 mb-1">
-        SEO Opportunities
-      </h3>
-      <p className="text-xs text-gray-500 mb-4">
-        Keywords you rank for (position &le; 20) with high impressions but low CTR (&lt; 3%). Improve title tags and meta descriptions.
-      </p>
-      <div className="overflow-x-auto">
+      <ChartHeader
+        title="SEO Opportunities"
+        description="Keywords you rank for (position \u2264 20) with high impressions but low CTR (< 3%). Improve title tags and meta descriptions."
+        infoContent={infoContent}
+      />
+      <div className="overflow-x-auto mt-3">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-gray-200">
@@ -36,10 +39,7 @@ export default function OpportunitiesTable({ data }: OpportunitiesTableProps) {
           </thead>
           <tbody>
             {data.map((row, i) => (
-              <tr
-                key={row.query}
-                className={`${i % 2 === 0 ? "bg-amber-50" : "bg-white"}`}
-              >
+              <tr key={row.query} className={`${i % 2 === 0 ? "bg-amber-50" : "bg-white"}`}>
                 <td className="py-2 px-2 text-gray-900 max-w-xs truncate">{row.query}</td>
                 <td className="py-2 px-2 text-right text-gray-700">{row.impressions.toLocaleString()}</td>
                 <td className="py-2 px-2 text-right text-gray-700">{row.clicks.toLocaleString()}</td>
