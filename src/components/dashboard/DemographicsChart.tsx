@@ -22,6 +22,7 @@ interface DemographicsChartProps {
     users: number;
   }>;
   color?: string;
+  barLabel?: string;
 }
 
 export default function DemographicsChart({
@@ -30,6 +31,7 @@ export default function DemographicsChart({
   infoContent,
   data,
   color = "#6366f1",
+  barLabel = "Sessions",
 }: DemographicsChartProps) {
   const labelWidth = Math.min(
     Math.max(...data.map((d) => d.dimension.length), 0) * 7 + 10,
@@ -52,7 +54,7 @@ export default function DemographicsChart({
               interval={0}
             />
             <Tooltip />
-            <Bar dataKey="sessions" name="Sessions" fill={color} radius={[0, 4, 4, 0]} />
+            <Bar dataKey="sessions" name={barLabel} fill={color} radius={[0, 4, 4, 0]} />
           </BarChart>
         </ResponsiveContainer>
       </div>

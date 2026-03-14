@@ -207,6 +207,7 @@ export default function SearchConsolePage() {
                   description="Organic search clicks by device type."
                   data={data.devices}
                   color="#6366f1"
+                  barLabel="Clicks"
                   infoContent={
                     <>
                       <p><strong>What am I looking at?</strong></p>
@@ -236,6 +237,7 @@ export default function SearchConsolePage() {
                   description="Organic search clicks by country."
                   data={data.countries}
                   color="#10b981"
+                  barLabel="Clicks"
                   infoContent={
                     <>
                       <p><strong>What am I looking at?</strong></p>

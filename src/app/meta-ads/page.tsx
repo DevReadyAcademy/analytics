@@ -372,6 +372,7 @@ export default function MetaAdsPage() {
                 description="Impressions and reach by platform (Facebook, Instagram, etc.)."
                 data={data.platforms}
                 color="#f59e0b"
+                barLabel="Impressions"
                 infoContent={
                   <>
                     <p><strong>What am I looking at?</strong></p>

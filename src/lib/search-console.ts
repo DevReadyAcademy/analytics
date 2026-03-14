@@ -223,6 +223,18 @@ export async function getSearchByCountry(
   );
 }
 
+// Average organic CTR by position (based on industry benchmarks)
+function getExpectedCtrForPosition(position: number): number {
+  const pos = Math.round(position);
+  const ctrByPosition: Record<number, number> = {
+    1: 0.28, 2: 0.15, 3: 0.11, 4: 0.08, 5: 0.065,
+    6: 0.05, 7: 0.04, 8: 0.035, 9: 0.03, 10: 0.025,
+    11: 0.02, 12: 0.018, 13: 0.016, 14: 0.015, 15: 0.014,
+    16: 0.013, 17: 0.012, 18: 0.011, 19: 0.010, 20: 0.009,
+  };
+  return ctrByPosition[Math.min(Math.max(pos, 1), 20)] ?? 0.01;
+}
+
 export async function getSEOOpportunities(
   startDate: string,
   endDate: string
@@ -249,9 +261,10 @@ export async function getSEOOpportunities(
     .map((row) => {
       const impressions = row.impressions ?? 0;
       const ctr = row.ctr ?? 0;
-      const avgCtrForPosition = 0.05;
+      const position = row.position ?? 0;
+      const expectedCtr = getExpectedCtrForPosition(position);
       const estimatedMissedClicks = Math.round(
-        impressions * (avgCtrForPosition - ctr)
+        impressions * Math.max(0, expectedCtr - ctr)
       );
 
       return {
@@ -259,8 +272,8 @@ export async function getSEOOpportunities(
         clicks: row.clicks ?? 0,
         impressions,
         ctr,
-        position: row.position ?? 0,
-        estimatedMissedClicks: Math.max(0, estimatedMissedClicks),
+        position,
+        estimatedMissedClicks,
       };
     })
     .sort((a, b) => b.impressions - a.impressions);
@@ -292,9 +305,10 @@ export async function getPageOpportunities(
     .map((row) => {
       const impressions = row.impressions ?? 0;
       const ctr = row.ctr ?? 0;
-      const avgCtrForPosition = 0.05;
+      const position = row.position ?? 0;
+      const expectedCtr = getExpectedCtrForPosition(position);
       const estimatedMissedClicks = Math.round(
-        impressions * (avgCtrForPosition - ctr)
+        impressions * Math.max(0, expectedCtr - ctr)
       );
 
       return {
@@ -302,8 +316,8 @@ export async function getPageOpportunities(
         clicks: row.clicks ?? 0,
         impressions,
         ctr,
-        position: row.position ?? 0,
-        estimatedMissedClicks: Math.max(0, estimatedMissedClicks),
+        position,
+        estimatedMissedClicks,
       };
     })
     .sort((a, b) => b.impressions - a.impressions);
