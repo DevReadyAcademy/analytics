@@ -12,7 +12,6 @@ interface Campaign {
   cpc: number;
   conversions: number;
   cpa: number;
-  roas?: number;
 }
 
 interface CampaignsTableProps {
@@ -36,7 +35,6 @@ export default function CampaignsTable({ data, infoContent }: CampaignsTableProp
               <th className="text-right py-3 px-2 font-medium text-gray-500">CPC</th>
               <th className="text-right py-3 px-2 font-medium text-gray-500">Conversions</th>
               <th className="text-right py-3 px-2 font-medium text-gray-500">CPA</th>
-              <th className="text-right py-3 px-2 font-medium text-gray-500">ROAS</th>
             </tr>
           </thead>
           <tbody>
@@ -50,7 +48,6 @@ export default function CampaignsTable({ data, infoContent }: CampaignsTableProp
                 <td className="py-2 px-2 text-right text-gray-700">&euro;{row.cpc.toFixed(2)}</td>
                 <td className="py-2 px-2 text-right text-gray-700">{row.conversions}</td>
                 <td className="py-2 px-2 text-right text-gray-700">{row.cpa > 0 ? `\u20AC${row.cpa.toFixed(2)}` : "\u2014"}</td>
-                <td className="py-2 px-2 text-right text-gray-700">{row.roas && row.roas > 0 ? `${row.roas.toFixed(2)}x` : "\u2014"}</td>
               </tr>
             ))}
           </tbody>
