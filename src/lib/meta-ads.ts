@@ -104,15 +104,10 @@ async function fetchMetaAds(endpoint: string, params: Record<string, string>) {
 }
 
 const conversionTypes = [
-  "offsite_conversion",
+  "schedule",
+  "offsite_conversion.fb_pixel_schedule",
   "lead",
-  "purchase",
-  "omni_purchase",
-  "onsite_conversion.messaging_conversation_started_7d",
-  "onsite_conversion.lead_grouped",
-  "contact_total",
-  "submit_application_total",
-  "complete_registration",
+  "offsite_conversion.fb_pixel_lead",
 ];
 
 function extractConversions(actions: Array<{ action_type: string; value: string }> | undefined): number {
