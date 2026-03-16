@@ -26,8 +26,6 @@ interface MetaAdsData {
     frequency: number;
     cpa: number;
     costPerLinkClick: number;
-    revenue: number;
-    roas: number;
   };
   previousMetrics: {
     spend: number;
@@ -42,8 +40,6 @@ interface MetaAdsData {
     frequency: number;
     cpa: number;
     costPerLinkClick: number;
-    revenue: number;
-    roas: number;
   } | null;
   timeSeries: Array<{
     date: string;
@@ -62,7 +58,6 @@ interface MetaAdsData {
     cpc: number;
     conversions: number;
     cpa: number;
-    roas: number;
   }>;
   creatives: Array<{
     adName: string;
@@ -200,11 +195,6 @@ export default function MetaAdsPage() {
                 title="Reach"
                 value={data.metrics.reach}
                 previousValue={prev?.reach}
-              />
-              <MetricCard
-                title="ROAS"
-                value={data.metrics.roas > 0 ? data.metrics.roas.toFixed(2) + "x" : "N/A"}
-                tooltip="Return on Ad Spend. Configure conversion values in Meta to activate."
               />
             </div>
             <div className="grid grid-cols-3 md:grid-cols-5 gap-3">
@@ -443,7 +433,6 @@ export default function MetaAdsPage() {
                     <li><strong>CPC</strong> — Cost per click. Lower is more efficient.</li>
                     <li><strong>Conversions</strong> — Lead actions (book_a_call, clicks) attributed to the campaign.</li>
                     <li><strong>CPA</strong> — Cost per acquisition. Your most important efficiency metric.</li>
-                    <li><strong>ROAS</strong> — Return on Ad Spend. Shown as N/A if no conversion values are configured in Meta.</li>
                   </ul>
 
                   <p className="mt-3"><strong>What to look for</strong></p>

@@ -22,8 +22,6 @@ interface OverviewData {
     reach: number;
     frequency: number;
     costPerLinkClick: number;
-    revenue: number;
-    roas: number;
   };
   ga: {
     totalUsers: number;
@@ -170,11 +168,6 @@ export default function OverviewPage() {
                 tooltip="Total ad spend / total conversions"
                 previousValue={prevBlendedCpa}
                 invertColor
-              />
-              <MetricCard
-                title="ROAS"
-                value={data.ads.roas > 0 ? data.ads.roas.toFixed(2) + "x" : "N/A"}
-                tooltip="Revenue / Ad Spend. Configure conversion values in Meta to activate."
               />
             </div>
 

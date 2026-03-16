@@ -16,8 +16,6 @@ export interface MetaAdsMetrics {
   frequency: number;
   cpa: number;
   costPerLinkClick: number;
-  revenue: number;
-  roas: number;
 }
 
 export interface MetaAdsTimeSeriesRow {
@@ -51,7 +49,6 @@ export interface MetaAdsCampaign {
   cpc: number;
   conversions: number;
   cpa: number;
-  roas: number;
 }
 
 export interface PlacementRow {
@@ -126,15 +123,6 @@ function extractLinkClicks(actions: Array<{ action_type: string; value: string }
   );
 }
 
-function extractRevenue(actionValues: Array<{ action_type: string; value: string }> | undefined): number {
-  return (actionValues ?? [])
-    .filter((a) =>
-      conversionTypes.some(
-        (t) => a.action_type === t || a.action_type.startsWith(`${t}.`)
-      )
-    )
-    .reduce((sum, a) => sum + Number(a.value ?? 0), 0);
-}
 
 export async function getAdsOverview(
   startDate: string,
@@ -142,7 +130,7 @@ export async function getAdsOverview(
 ): Promise<MetaAdsMetrics> {
   const data = await fetchMetaAds(`act_${accountId}/insights`, {
     fields:
-      "spend,impressions,clicks,ctr,cpc,cpm,reach,actions,action_values",
+      "spend,impressions,clicks,ctr,cpc,cpm,reach,actions",
     time_range: JSON.stringify({
       since: startDate,
       until: endDate,
@@ -164,14 +152,11 @@ export async function getAdsOverview(
       frequency: 0,
       cpa: 0,
       costPerLinkClick: 0,
-      revenue: 0,
-      roas: 0,
     };
   }
 
   const conversions = extractConversions(row.actions);
   const linkClicks = extractLinkClicks(row.actions);
-  const revenue = extractRevenue(row.action_values);
   const spend = Number(row.spend ?? 0);
 
   return {
@@ -189,8 +174,6 @@ export async function getAdsOverview(
       : 0,
     cpa: conversions > 0 ? spend / conversions : 0,
     costPerLinkClick: linkClicks > 0 ? spend / linkClicks : 0,
-    revenue,
-    roas: spend > 0 ? revenue / spend : 0,
   };
 }
 
@@ -237,7 +220,7 @@ export async function getCampaigns(
 ): Promise<MetaAdsCampaign[]> {
   const data = await fetchMetaAds(`act_${accountId}/insights`, {
     fields:
-      "campaign_name,spend,impressions,clicks,ctr,cpc,actions,action_values",
+      "campaign_name,spend,impressions,clicks,ctr,cpc,actions",
     time_range: JSON.stringify({
       since: startDate,
       until: endDate,
@@ -256,10 +239,8 @@ export async function getCampaigns(
         ctr: string;
         cpc: string;
         actions?: Array<{ action_type: string; value: string }>;
-        action_values?: Array<{ action_type: string; value: string }>;
       }) => {
         const conversions = extractConversions(row.actions);
-        const revenue = extractRevenue(row.action_values);
         const spend = Number(row.spend ?? 0);
 
         return {
@@ -272,7 +253,6 @@ export async function getCampaigns(
           cpc: Number(row.cpc ?? 0),
           conversions,
           cpa: conversions > 0 ? spend / conversions : 0,
-          roas: spend > 0 ? revenue / spend : 0,
         };
       }
     ) ?? []
