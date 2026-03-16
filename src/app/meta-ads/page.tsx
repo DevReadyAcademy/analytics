@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { format, subDays, differenceInDays } from "date-fns";
 import MetricCard from "@/components/dashboard/MetricCard";
 import TrafficChart from "@/components/dashboard/TrafficChart";
@@ -99,10 +100,15 @@ interface MetaAdsData {
 }
 
 export default function MetaAdsPage() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
   const [startDate, setStartDate] = useState(
-    format(subDays(new Date(), 28), "yyyy-MM-dd")
+    searchParams.get("startDate") || format(subDays(new Date(), 28), "yyyy-MM-dd")
   );
-  const [endDate, setEndDate] = useState(format(new Date(), "yyyy-MM-dd"));
+  const [endDate, setEndDate] = useState(
+    searchParams.get("endDate") || format(new Date(), "yyyy-MM-dd")
+  );
   const [data, setData] = useState<MetaAdsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -140,6 +146,7 @@ export default function MetaAdsPage() {
   const handleRangeChange = (start: string, end: string) => {
     setStartDate(start);
     setEndDate(end);
+    router.replace(`${pathname}?startDate=${start}&endDate=${end}`);
   };
 
   const prev = data?.previousMetrics;

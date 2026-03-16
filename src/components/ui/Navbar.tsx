@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 
 const links = [
   { href: "/overview", label: "Overview" },
@@ -12,6 +12,11 @@ const links = [
 
 export default function Navbar() {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const dateQuery = ["startDate", "endDate"]
+    .filter((k) => searchParams.has(k))
+    .map((k) => `${k}=${searchParams.get(k)}`)
+    .join("&");
 
   return (
     <nav className="bg-white border-b border-gray-200">
@@ -34,7 +39,7 @@ export default function Navbar() {
                 return (
                   <Link
                     key={href}
-                    href={href}
+                    href={dateQuery ? `${href}?${dateQuery}` : href}
                     className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                       isActive
                         ? "bg-gray-100 text-gray-900"
