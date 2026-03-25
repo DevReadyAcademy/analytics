@@ -11,6 +11,9 @@ import DemographicsChart from "@/components/dashboard/DemographicsChart";
 import AudienceBreakdownChart from "@/components/dashboard/AudienceBreakdownChart";
 import FrequencyChart from "@/components/dashboard/FrequencyChart";
 import PlacementTable from "@/components/dashboard/PlacementTable";
+import TargetComparisonChart from "@/components/dashboard/TargetComparisonChart";
+import CreativeRankingChart from "@/components/dashboard/CreativeRankingChart";
+import BudgetUtilizationChart from "@/components/dashboard/BudgetUtilizationChart";
 import DateRangePicker from "@/components/dashboard/DateRangePicker";
 
 interface MetaAdsData {
@@ -24,6 +27,7 @@ interface MetaAdsData {
     reach: number;
     conversions: number;
     linkClicks: number;
+    landingPageViews: number;
     frequency: number;
     cpa: number;
     costPerLinkClick: number;
@@ -38,6 +42,7 @@ interface MetaAdsData {
     reach: number;
     conversions: number;
     linkClicks: number;
+    landingPageViews: number;
     frequency: number;
     cpa: number;
     costPerLinkClick: number;
@@ -180,6 +185,7 @@ export default function MetaAdsPage() {
                 value={data.metrics.spend}
                 format="currency"
                 previousValue={prev?.spend}
+                invertColor
               />
               <MetricCard
                 title="Impressions"
@@ -218,8 +224,8 @@ export default function MetaAdsPage() {
                 format="percent_raw"
                 tooltip="Click-Through Rate — percentage of impressions that resulted in a click"
                 previousValue={prev?.ctr}
-                target={1.5}
-                targetLabel="1.5% industry avg"
+                target={3.0}
+                targetLabel="3.0% target"
               />
               <MetricCard
                 title="CPC"
@@ -228,8 +234,8 @@ export default function MetaAdsPage() {
                 tooltip="Cost Per Click — average cost for each click on your ad"
                 previousValue={prev?.cpc}
                 invertColor
-                target={0.5}
-                targetLabel="\u20ac0.50 target"
+                target={0.05}
+                targetLabel="\u20ac0.05 target"
               />
               <MetricCard
                 title="CPM"
@@ -267,6 +273,78 @@ export default function MetaAdsPage() {
               />
             </div>
 
+            <TargetComparisonChart
+              ctr={data.metrics.ctr}
+              cpc={data.metrics.cpc}
+              cpa={data.metrics.cpa}
+              infoContent={
+                <>
+                  <p><strong>What am I looking at?</strong></p>
+                  <p>How your three key efficiency metrics compare to your targets. Each bar shows the percentage of target achieved — 100% means you&apos;re hitting the target exactly.</p>
+
+                  <p className="mt-3"><strong>How to read it</strong></p>
+                  <ul className="list-disc pl-4 space-y-1">
+                    <li><strong>Green</strong> — Beating the target. Keep doing what you&apos;re doing.</li>
+                    <li><strong>Amber</strong> — Close to target but not quite there. Minor tweaks needed.</li>
+                    <li><strong>Red</strong> — Significantly below target. Needs attention.</li>
+                  </ul>
+
+                  <p className="mt-3"><strong>Targets</strong></p>
+                  <ul className="list-disc pl-4 space-y-1">
+                    <li><strong>CTR</strong> — 3.0% (based on your best-week performance)</li>
+                    <li><strong>CPC</strong> — &euro;0.05 (lower is better, based on your best-week CPC)</li>
+                    <li><strong>CPA</strong> — &euro;15.00 (lower is better, will refine once CAPI has data)</li>
+                  </ul>
+                </>
+              }
+            />
+
+            <CreativeRankingChart
+              data={data.creatives}
+              infoContent={
+                <>
+                  <p><strong>What am I looking at?</strong></p>
+                  <p>A visual ranking of all your ad creatives by composite performance score. Makes it easy to spot top and bottom performers at a glance.</p>
+
+                  <p className="mt-3"><strong>How to read it</strong></p>
+                  <ul className="list-disc pl-4 space-y-1">
+                    <li><strong>Green (70+)</strong> — Top performer. Increase budget allocation.</li>
+                    <li><strong>Indigo (50-69)</strong> — Good creative. Performing well.</li>
+                    <li><strong>Amber (30-49)</strong> — Average. Consider testing variations.</li>
+                    <li><strong>Red (&lt;30)</strong> — Underperforming. Pause or replace.</li>
+                  </ul>
+
+                  <p className="mt-3"><strong>Score formula</strong></p>
+                  <p>30% video completion rate + 25% thruplay rate + 25% CTR + 20% cost efficiency. Hover over bars for detailed metrics.</p>
+                </>
+              }
+            />
+
+            <BudgetUtilizationChart
+              data={data.timeSeries}
+              dailyBudget={35}
+              infoContent={
+                <>
+                  <p><strong>What am I looking at?</strong></p>
+                  <p>Daily actual spend vs your &euro;35/day budget. Shows whether Meta is fully spending your budget or under-delivering.</p>
+
+                  <p className="mt-3"><strong>How to read it</strong></p>
+                  <ul className="list-disc pl-4 space-y-1">
+                    <li><strong>Area touching the red line</strong> — Full budget is being spent. Campaigns are healthy.</li>
+                    <li><strong>Area well below the line</strong> — Meta isn&apos;t spending your full budget. Could mean audience is too narrow, bids are too low, or ads aren&apos;t getting approved.</li>
+                    <li><strong>Area above the line</strong> — Rare, but can happen with accelerated delivery or budget changes mid-day.</li>
+                  </ul>
+
+                  <p className="mt-3"><strong>What to look for</strong></p>
+                  <ul className="list-disc pl-4 space-y-1">
+                    <li><strong>Consistent under-delivery</strong> — Widen your audience or increase bids.</li>
+                    <li><strong>Sudden drops</strong> — An ad may have been disapproved or a campaign paused.</li>
+                    <li><strong>The summary line</strong> shows your overall utilization % and average daily spend.</li>
+                  </ul>
+                </>
+              }
+            />
+
             <TrafficChart
               title="Ad Spend & Clicks Over Time"
               description="Daily spend vs clicks. Spot days with high spend but low engagement."
@@ -278,31 +356,14 @@ export default function MetaAdsPage() {
               infoContent={
                 <>
                   <p><strong>What am I looking at?</strong></p>
-                  <p>Daily ad spend (red) vs click volume (purple) from Meta Ads. This shows the relationship between how much you&apos;re spending and the engagement you&apos;re getting.</p>
-
-                  <p className="mt-3"><strong>How to read it</strong></p>
-                  <p>Both lines should generally move together. When spend rises, clicks should rise proportionally. A widening gap between spend and clicks signals declining efficiency.</p>
-
-                  <p className="mt-3"><strong>What to look for</strong></p>
-                  <ul className="list-disc pl-4 space-y-1">
-                    <li><strong>Spend up, clicks flat</strong> — You&apos;re paying more for the same results. Check if audience fatigue, increased competition, or poor creative is the cause.</li>
-                    <li><strong>Sudden drops in clicks</strong> — Could indicate ad disapprovals, budget depletion, or targeting changes.</li>
-                    <li><strong>Weekend patterns</strong> — B2B campaigns may see lower weekend performance. Consider day-parting if so.</li>
-                  </ul>
-
-                  <p className="mt-3"><strong>Actions you can take</strong></p>
-                  <ul className="list-disc pl-4 space-y-1">
-                    <li>If efficiency drops, refresh creatives or expand audiences to combat fatigue.</li>
-                    <li>Pause or reduce spend on days that consistently underperform.</li>
-                    <li>Correlate click spikes with campaign launches to identify what works.</li>
-                  </ul>
+                  <p>Daily ad spend (red) vs click volume (purple). Both lines should move together — a widening gap signals declining efficiency.</p>
                 </>
               }
             />
 
             <TrafficChart
               title="Cost Trends (CPC & CPM)"
-              description="Rising CPC/CPM signals deteriorating unit economics. Critical for budget planning."
+              description="Rising CPC/CPM signals deteriorating unit economics."
               data={data.timeSeries}
               lines={[
                 { key: "cpc", label: "CPC (\u20ac)", color: "#f59e0b" },
@@ -311,28 +372,7 @@ export default function MetaAdsPage() {
               infoContent={
                 <>
                   <p><strong>What am I looking at?</strong></p>
-                  <p>Daily Cost Per Click (CPC) and Cost Per Mille (CPM — cost per 1,000 impressions). These are your unit economics for advertising.</p>
-
-                  <p className="mt-3"><strong>How to read it</strong></p>
-                  <ul className="list-disc pl-4 space-y-1">
-                    <li><strong>CPC (amber)</strong> — What you pay each time someone clicks your ad. Lower is better.</li>
-                    <li><strong>CPM (red)</strong> — What you pay per 1,000 impressions. Indicates how expensive it is to reach your audience.</li>
-                  </ul>
-
-                  <p className="mt-3"><strong>What to look for</strong></p>
-                  <ul className="list-disc pl-4 space-y-1">
-                    <li><strong>Rising CPC trend</strong> — Advertising is getting more expensive. May indicate audience saturation, increased competition, or declining ad relevance.</li>
-                    <li><strong>CPC spikes</strong> — Often coincide with holidays, events, or competitor promotions when ad auction competition intensifies.</li>
-                    <li><strong>CPM rising but CPC stable</strong> — Your CTR is improving (good creative) even as impressions cost more.</li>
-                    <li><strong>Both rising</strong> — Urgent signal. You&apos;re paying more and getting less. Review targeting and creative immediately.</li>
-                  </ul>
-
-                  <p className="mt-3"><strong>Actions you can take</strong></p>
-                  <ul className="list-disc pl-4 space-y-1">
-                    <li>When CPC rises: test new creatives, refine audience targeting, or try new placements (Reels often has lower CPC).</li>
-                    <li>When CPM rises: broaden your audience to reduce auction competition or shift budget to lower-CPM placements.</li>
-                    <li>Set CPC/CPM benchmarks and pause campaigns that consistently exceed them.</li>
-                  </ul>
+                  <p>Daily Cost Per Click (CPC) and Cost Per Mille (CPM). Rising trends mean you&apos;re paying more for the same results.</p>
                 </>
               }
             />

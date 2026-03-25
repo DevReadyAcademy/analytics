@@ -13,6 +13,7 @@ export interface MetaAdsMetrics {
   reach: number;
   conversions: number;
   linkClicks: number;
+  landingPageViews: number;
   frequency: number;
   cpa: number;
   costPerLinkClick: number;
@@ -123,6 +124,12 @@ function extractLinkClicks(actions: Array<{ action_type: string; value: string }
   );
 }
 
+function extractLandingPageViews(actions: Array<{ action_type: string; value: string }> | undefined): number {
+  return Number(
+    actions?.find((a) => a.action_type === "landing_page_view")?.value ?? 0
+  );
+}
+
 
 export async function getAdsOverview(
   startDate: string,
@@ -149,6 +156,7 @@ export async function getAdsOverview(
       reach: 0,
       conversions: 0,
       linkClicks: 0,
+      landingPageViews: 0,
       frequency: 0,
       cpa: 0,
       costPerLinkClick: 0,
@@ -157,6 +165,7 @@ export async function getAdsOverview(
 
   const conversions = extractConversions(row.actions);
   const linkClicks = extractLinkClicks(row.actions);
+  const landingPageViews = extractLandingPageViews(row.actions);
   const spend = Number(row.spend ?? 0);
 
   return {
@@ -169,6 +178,7 @@ export async function getAdsOverview(
     reach: Number(row.reach ?? 0),
     conversions,
     linkClicks,
+    landingPageViews,
     frequency: Number(row.reach ?? 0) > 0
       ? Number(row.impressions ?? 0) / Number(row.reach ?? 1)
       : 0,
