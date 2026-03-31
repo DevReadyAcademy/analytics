@@ -102,8 +102,7 @@ async function fetchMetaAds(endpoint: string, params: Record<string, string>) {
 }
 
 const conversionTypes = [
-  "schedule",
-  "offsite_conversion.fb_pixel_schedule",
+  "offsite_conversion.fb_pixel_custom",
   "lead",
   "offsite_conversion.fb_pixel_lead",
 ];
