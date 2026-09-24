@@ -178,11 +178,10 @@ export async function getCampaignAttribution(startDate: string, endDate: string,
   for (const enrollment of crm.enrollments) {
     const email = emailKey(enrollment.user?.email);
     if (!email) continue;
-    const hasPaymentHistory = (enrollment.history || []).length > 0;
     const payments = (enrollment.history || []).filter((payment) => isInRange(payment.date));
-    const paidInRange = hasPaymentHistory
-      ? payments.reduce((sum, payment) => sum + Number(payment.amount || 0), 0)
-      : (isInRange(enrollment.createdAt) ? Number(enrollment.amountPaid || 0) : 0);
+    // Date-filtered reporting must use the actual payment event date. Never
+    // substitute enrollment.createdAt, which can make an old payment look new.
+    const paidInRange = payments.reduce((sum, payment) => sum + Number(payment.amount || 0), 0);
     if (paidInRange <= 0) continue;
     const current = paidByEmail.get(email) || { deposits: 0, committed: 0 };
     current.deposits += paidInRange;
