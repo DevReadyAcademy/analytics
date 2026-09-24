@@ -149,15 +149,10 @@ export async function getCampaignAttribution(startDate: string, endDate: string,
     getMetaLeads(),
     getCrmData(),
   ]);
-  const leadByEmail = new Map<string, Lead>();
-  const leadByPhone = new Map<string, Lead>();
-  for (const lead of leads.sort((a, b) => a.createdTime.localeCompare(b.createdTime))) {
-    if (lead.email && !leadByEmail.has(lead.email)) leadByEmail.set(lead.email, lead);
-    if (lead.phone && !leadByPhone.has(lead.phone)) leadByPhone.set(lead.phone, lead);
-  }
   const usersByEmail = new Map(crm.users.map((user) => [emailKey(user.email), user]));
   const usersByPhone = new Map(crm.users.map((user) => [phoneKey(user.phone), user]));
   const paidByEmail = new Map<string, { deposits: number; committed: number }>();
+  const paidAllByEmail = new Map<string, { deposits: number; committed: number }>();
   const from = new Date(`${startDate}T00:00:00.000Z`).getTime();
   const until = new Date(`${endDate}T23:59:59.999Z`).getTime();
   const isInRange = (value?: string) => {
@@ -177,24 +172,35 @@ export async function getCampaignAttribution(startDate: string, endDate: string,
     current.committed += Number(enrollment.totalAmount || 0);
     paidByEmail.set(email, current);
   }
+  for (const enrollment of crm.enrollments) {
+    const email = emailKey(enrollment.user?.email);
+    const amountPaid = Number(enrollment.amountPaid || 0);
+    if (!email || amountPaid <= 0) continue;
+    const current = paidAllByEmail.get(email) || { deposits: 0, committed: 0 };
+    current.deposits += amountPaid;
+    current.committed += Number(enrollment.totalAmount || 0);
+    paidAllByEmail.set(email, current);
+  }
+  const scopedLeads = leads.filter((lead) => isInRange(lead.createdTime));
   const result = new Map<string, CampaignAttribution>();
   for (const campaign of metaCampaigns) {
     result.set(campaign.campaignName, { campaignId: campaign.campaignId, campaignName: campaign.campaignName, leads: 0, bookings: 0, customers: 0, deposits: 0, committedRevenue: 0, matchedContacts: 0, unattributedCustomers: 0 });
   }
   const seenBookings = new Set<string>();
   const seenCustomers = new Set<string>();
-  for (const lead of leads) {
+  for (const lead of scopedLeads) {
     const row = result.get(lead.campaignName) || { campaignId: lead.campaignId, campaignName: lead.campaignName, leads: 0, bookings: 0, customers: 0, deposits: 0, committedRevenue: 0, matchedContacts: 0, unattributedCustomers: 0 };
     row.leads += 1;
     const user = (lead.email && usersByEmail.get(lead.email)) || (lead.phone && usersByPhone.get(lead.phone));
     if (user) {
       row.matchedContacts += 1;
       const contactKey = emailKey(user.email) || phoneKey(user.phone);
-      if (user.booking?.scheduledAt && !seenBookings.has(`${lead.campaignName}:${contactKey}`)) {
+      if (isInRange(user.booking?.scheduledAt) && !seenBookings.has(`${lead.campaignName}:${contactKey}`)) {
         row.bookings += 1;
         seenBookings.add(`${lead.campaignName}:${contactKey}`);
       }
-      const paid = paidByEmail.get(emailKey(user.email));
+      // A lead's campaign owns the conversion even when the customer paid later.
+      const paid = paidAllByEmail.get(emailKey(user.email));
       if (paid && !seenCustomers.has(`${lead.campaignName}:${contactKey}`)) {
         row.customers += 1;
         row.deposits += paid.deposits;
@@ -207,7 +213,7 @@ export async function getCampaignAttribution(startDate: string, endDate: string,
   return {
     campaigns: Array.from(result.values()),
     overall: {
-      leads: leads.length,
+      leads: scopedLeads.length,
       bookings: crm.users.filter((user) => isInRange(user.booking?.scheduledAt)).length,
       paidCustomers: paidByEmail.size,
       deposits: Array.from(paidByEmail.values()).reduce((sum, value) => sum + value.deposits, 0),
