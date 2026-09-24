@@ -17,6 +17,7 @@ import BudgetUtilizationChart from "@/components/dashboard/BudgetUtilizationChar
 import DateRangePicker from "@/components/dashboard/DateRangePicker";
 
 interface MetaAdsData {
+  attributionError?: string | null;
   metrics: {
     spend: number;
     impressions: number;
@@ -31,6 +32,12 @@ interface MetaAdsData {
     frequency: number;
     cpa: number;
     costPerLinkClick: number;
+    crmLeads?: number;
+    crmBookings?: number;
+    paidCustomers?: number;
+    deposits?: number;
+    committedRevenue?: number;
+    customerAcquisitionCost?: number;
   };
   previousMetrics: {
     spend: number;
@@ -46,6 +53,8 @@ interface MetaAdsData {
     frequency: number;
     cpa: number;
     costPerLinkClick: number;
+    paidCustomers?: number;
+    customerAcquisitionCost?: number;
   } | null;
   timeSeries: Array<{
     date: string;
@@ -190,6 +199,11 @@ export default function MetaAdsPage() {
           <LoadingPlaceholder />
         ) : data ? (
           <div className="space-y-6">
+            {data.attributionError && (
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 text-amber-800 text-sm">
+                CRM attribution is unavailable: {data.attributionError}. Meta metrics are still shown, but CRM leads, customers, CAC and ROAS cannot be calculated.
+              </div>
+            )}
             <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
               <MetricCard
                 title="Total Spend"
@@ -257,22 +271,34 @@ export default function MetaAdsPage() {
                 invertColor
               />
               <MetricCard
-                title="Conversions"
+                title="Paid customers"
+                value={data.metrics.paidCustomers ?? 0}
+                tooltip="Primary business conversion: CRM contacts with at least one recorded payment"
+                previousValue={prev?.paidCustomers}
+              />
+              <MetricCard
+                title="Meta lead actions"
                 value={data.metrics.conversions}
-                tooltip="Total conversion actions (purchases, leads, messages, registrations)"
+                tooltip="Meta-reported lead or pixel actions; this is separate from paid customers"
                 previousValue={prev?.conversions}
               />
             </div>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               <MetricCard
-                title="CPA"
+                title="Customer acquisition cost"
+                value={data.metrics.customerAcquisitionCost ?? 0}
+                format="currency"
+                tooltip="Ad spend divided by CRM paid customers"
+                previousValue={prev?.customerAcquisitionCost}
+                invertColor
+              />
+              <MetricCard
+                title="Meta CPA"
                 value={data.metrics.cpa}
                 format="currency"
-                tooltip="Cost Per Acquisition — spend / conversions"
+                tooltip="Ad spend divided by Meta-reported lead actions"
                 previousValue={prev?.cpa}
                 invertColor
-                target={15}
-                targetLabel="\u20ac15.00 target"
               />
               <MetricCard
                 title="Cost/Link Click"
@@ -482,15 +508,15 @@ export default function MetaAdsPage() {
               infoContent={
                 <>
                   <p><strong>What am I looking at?</strong></p>
-                  <p>A performance breakdown of each Meta Ads campaign. Shows spend, clicks, conversions, and efficiency metrics side by side.</p>
+                  <p>A performance breakdown of each Meta Ads campaign, combining Meta delivery data with CRM outcomes.</p>
 
                   <p className="mt-3"><strong>How to read it</strong></p>
                   <ul className="list-disc pl-4 space-y-1">
                     <li><strong>Spend</strong> — Total budget consumed by each campaign.</li>
                     <li><strong>CTR</strong> — Click-through rate. Higher means more engaging ads.</li>
                     <li><strong>CPC</strong> — Cost per click. Lower is more efficient.</li>
-                    <li><strong>Conversions</strong> — Lead actions (book_a_call, clicks) attributed to the campaign.</li>
-                    <li><strong>CPA</strong> — Cost per acquisition. Your most important efficiency metric.</li>
+                    <li><strong>Meta actions / Meta CPA</strong> — Meta-reported lead or pixel actions, separate from customers.</li>
+                    <li><strong>Customers / CAC</strong> — CRM contacts with recorded payments and ad spend per paid customer.</li>
                   </ul>
 
                   <p className="mt-3"><strong>What to look for</strong></p>

@@ -39,16 +39,26 @@ export async function GET(request: NextRequest) {
       optional("frequency", getFrequencyDistribution(startDate, endDate), []),
       optional("placement", getPlacementBreakdown(startDate, endDate), []),
     ]);
-    const attribution = await optional(
-      "CRM attribution",
-      getCampaignAttribution(startDate, endDate, campaigns),
-      []
-    );
+    let attribution: Awaited<ReturnType<typeof getCampaignAttribution>> = [];
+    let attributionError: string | null = null;
+    try {
+      attribution = await getCampaignAttribution(startDate, endDate, campaigns);
+    } catch (error) {
+      attributionError = error instanceof Error ? error.message : "CRM attribution request failed";
+      console.error("CRM attribution request failed:", error);
+    }
     const attributionByName = new Map(attribution.map((row) => [row.campaignName, row]));
     const enrichedCampaigns = campaigns.map((campaign) => ({
       ...campaign,
       attribution: attributionByName.get(campaign.campaignName) ?? null,
     }));
+    const crmTotals = attribution.reduce((totals, row) => ({
+      leads: totals.leads + row.leads,
+      bookings: totals.bookings + row.bookings,
+      customers: totals.customers + row.customers,
+      deposits: totals.deposits + row.deposits,
+      committedRevenue: totals.committedRevenue + row.committedRevenue,
+    }), { leads: 0, bookings: 0, customers: 0, deposits: 0, committedRevenue: 0 });
 
     let previousMetrics = null;
     if (compareStartDate && compareEndDate) {
@@ -56,11 +66,20 @@ export async function GET(request: NextRequest) {
     }
 
     return NextResponse.json({
-      metrics,
+      metrics: {
+        ...metrics,
+        crmLeads: crmTotals.leads,
+        crmBookings: crmTotals.bookings,
+        paidCustomers: crmTotals.customers,
+        deposits: crmTotals.deposits,
+        committedRevenue: crmTotals.committedRevenue,
+        customerAcquisitionCost: crmTotals.customers > 0 ? metrics.spend / crmTotals.customers : 0,
+      },
       previousMetrics,
       timeSeries,
       campaigns: enrichedCampaigns,
       attribution,
+      attributionError,
       creatives,
       ageGender,
       platforms,

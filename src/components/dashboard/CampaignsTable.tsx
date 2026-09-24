@@ -41,8 +41,8 @@ export default function CampaignsTable({ data, infoContent }: CampaignsTableProp
               <th className="text-right py-3 px-2 font-medium text-gray-500">Clicks</th>
               <th className="text-right py-3 px-2 font-medium text-gray-500">CTR</th>
               <th className="text-right py-3 px-2 font-medium text-gray-500">CPC</th>
-              <th className="text-right py-3 px-2 font-medium text-gray-500">Conversions</th>
-              <th className="text-right py-3 px-2 font-medium text-gray-500">CPA</th>
+              <th className="text-right py-3 px-2 font-medium text-gray-500">Meta actions</th>
+              <th className="text-right py-3 px-2 font-medium text-gray-500">Meta CPA</th>
               <th className="text-right py-3 px-2 font-medium text-gray-500">CRM leads</th>
               <th className="text-right py-3 px-2 font-medium text-gray-500">Bookings</th>
               <th className="text-right py-3 px-2 font-medium text-gray-500">Customers</th>
