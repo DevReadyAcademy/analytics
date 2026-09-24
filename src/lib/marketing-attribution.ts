@@ -31,7 +31,7 @@ export interface AttributionResult {
 
 type Lead = { email: string; phone: string; createdTime: string; campaignId: string; campaignName: string };
 type CrmUser = { email?: string; phone?: string; booking?: { scheduledAt?: string }; paymentSummary?: { amountPaid?: number }; };
-type Enrollment = { user?: { email?: string }; totalAmount?: number; amountPaid?: number };
+type Enrollment = { user?: { email?: string }; totalAmount?: number; amountPaid?: number; createdAt?: string; history?: Array<{ amount?: number; date?: string }> };
 let leadsCache: { expires: number; value: Lead[] } | null = null;
 let crmCache: { expires: number; value: { users: CrmUser[]; enrollments: Enrollment[] } } | null = null;
 const CACHE_MS = 5 * 60 * 1000;
@@ -158,11 +158,22 @@ export async function getCampaignAttribution(startDate: string, endDate: string,
   const usersByEmail = new Map(crm.users.map((user) => [emailKey(user.email), user]));
   const usersByPhone = new Map(crm.users.map((user) => [phoneKey(user.phone), user]));
   const paidByEmail = new Map<string, { deposits: number; committed: number }>();
+  const from = new Date(`${startDate}T00:00:00.000Z`).getTime();
+  const until = new Date(`${endDate}T23:59:59.999Z`).getTime();
+  const isInRange = (value?: string) => {
+    const time = value ? new Date(value).getTime() : NaN;
+    return Number.isFinite(time) && time >= from && time <= until;
+  };
   for (const enrollment of crm.enrollments) {
     const email = emailKey(enrollment.user?.email);
-    if (!email || Number(enrollment.amountPaid || 0) <= 0) continue;
+    if (!email) continue;
+    const payments = (enrollment.history || []).filter((payment) => isInRange(payment.date));
+    const paidInRange = payments.length > 0
+      ? payments.reduce((sum, payment) => sum + Number(payment.amount || 0), 0)
+      : (isInRange(enrollment.createdAt) ? Number(enrollment.amountPaid || 0) : 0);
+    if (paidInRange <= 0) continue;
     const current = paidByEmail.get(email) || { deposits: 0, committed: 0 };
-    current.deposits += Number(enrollment.amountPaid || 0);
+    current.deposits += paidInRange;
     current.committed += Number(enrollment.totalAmount || 0);
     paidByEmail.set(email, current);
   }
@@ -197,7 +208,7 @@ export async function getCampaignAttribution(startDate: string, endDate: string,
     campaigns: Array.from(result.values()),
     overall: {
       leads: leads.length,
-      bookings: crm.users.filter((user) => Boolean(user.booking?.scheduledAt)).length,
+      bookings: crm.users.filter((user) => isInRange(user.booking?.scheduledAt)).length,
       paidCustomers: paidByEmail.size,
       deposits: Array.from(paidByEmail.values()).reduce((sum, value) => sum + value.deposits, 0),
       committedRevenue: Array.from(paidByEmail.values()).reduce((sum, value) => sum + value.committed, 0),
