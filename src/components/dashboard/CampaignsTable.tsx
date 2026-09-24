@@ -57,7 +57,7 @@ export default function CampaignsTable({ data, infoContent }: CampaignsTableProp
             {data.map((row, i) => (
               <Fragment key={row.campaignName}>
               <tr key={row.campaignName} onClick={() => setExpanded(expanded === row.campaignName ? null : row.campaignName)} className={`${i % 2 === 0 ? "bg-gray-50" : "bg-white"} cursor-pointer hover:bg-indigo-50`}>
-                <td className="py-2 px-2 text-gray-900 max-w-xs truncate"><span className="mr-2 text-gray-400">{expanded === row.campaignName ? "▾" : "▸"}</span>{row.campaignName}</td>
+                <td title={row.campaignName} className="py-2 px-2 text-gray-900 min-w-[320px] whitespace-nowrap"><span className="mr-2 text-gray-400">{expanded === row.campaignName ? "▾" : "▸"}</span>{row.campaignName}</td>
                 <td className="py-2 px-2 text-right text-gray-700">&euro;{row.spend.toFixed(2)}</td>
                 <td className="py-2 px-2 text-right text-gray-700">{row.impressions.toLocaleString()}</td>
                 <td className="py-2 px-2 text-right text-gray-700">{row.clicks.toLocaleString()}</td>
