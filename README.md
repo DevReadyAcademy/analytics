@@ -7,7 +7,7 @@ deposits, committed revenue, CAC and ROAS. Configure these server-side variables
 in the deployment environment (never expose the API key to the browser):
 
 ```text
-LMS_API_URL=https://api.devready.gr
+LMS_API_URL=https://my.devready.gr
 LMS_API_KEY=<read-only admin API key created in the LMS>
 META_ADS_PAGE_ID=<connected Meta Page ID>
 ```
