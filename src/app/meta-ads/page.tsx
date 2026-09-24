@@ -56,6 +56,7 @@ interface MetaAdsData {
     cpm: number;
   }>;
   campaigns: Array<{
+    campaignId: string;
     campaignName: string;
     spend: number;
     impressions: number;
@@ -64,6 +65,13 @@ interface MetaAdsData {
     cpc: number;
     conversions: number;
     cpa: number;
+    attribution?: {
+      leads: number;
+      bookings: number;
+      customers: number;
+      deposits: number;
+      committedRevenue: number;
+    } | null;
   }>;
   creatives: Array<{
     adName: string;
@@ -135,7 +143,10 @@ export default function MetaAdsPage() {
 
     try {
       const res = await fetch(`/api/meta-ads?${params}`, { cache: "no-store" });
-      if (!res.ok) throw new Error("Failed to fetch Meta Ads data");
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        throw new Error(body?.details || body?.error || "Failed to fetch Meta Ads data");
+      }
       setData(await res.json());
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Unknown error");

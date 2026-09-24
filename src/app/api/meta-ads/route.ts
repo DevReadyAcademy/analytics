@@ -9,6 +9,7 @@ import {
   getFrequencyDistribution,
   getPlacementBreakdown,
 } from "@/lib/meta-ads";
+import { getCampaignAttribution } from "@/lib/marketing-attribution";
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
@@ -19,16 +20,35 @@ export async function GET(request: NextRequest) {
   const compareEndDate = searchParams.get("compareEndDate");
 
   try {
+    const optional = async <T>(label: string, request: Promise<T>, fallback: T): Promise<T> => {
+      try {
+        return await request;
+      } catch (error) {
+        console.error(`Meta Ads ${label} request failed:`, error);
+        return fallback;
+      }
+    };
+
     const [metrics, timeSeries, campaigns, creatives, ageGender, platforms, frequency, placements] = await Promise.all([
       getAdsOverview(startDate, endDate),
       getAdsTimeSeries(startDate, endDate),
       getCampaigns(startDate, endDate),
-      getAdCreatives(startDate, endDate),
-      getAgeGenderBreakdown(startDate, endDate),
-      getPlatformBreakdown(startDate, endDate),
-      getFrequencyDistribution(startDate, endDate),
-      getPlacementBreakdown(startDate, endDate),
+      optional("creative", getAdCreatives(startDate, endDate), []),
+      optional("age/gender", getAgeGenderBreakdown(startDate, endDate), []),
+      optional("platform", getPlatformBreakdown(startDate, endDate), []),
+      optional("frequency", getFrequencyDistribution(startDate, endDate), []),
+      optional("placement", getPlacementBreakdown(startDate, endDate), []),
     ]);
+    const attribution = await optional(
+      "CRM attribution",
+      getCampaignAttribution(startDate, endDate, campaigns),
+      []
+    );
+    const attributionByName = new Map(attribution.map((row) => [row.campaignName, row]));
+    const enrichedCampaigns = campaigns.map((campaign) => ({
+      ...campaign,
+      attribution: attributionByName.get(campaign.campaignName) ?? null,
+    }));
 
     let previousMetrics = null;
     if (compareStartDate && compareEndDate) {
@@ -39,7 +59,8 @@ export async function GET(request: NextRequest) {
       metrics,
       previousMetrics,
       timeSeries,
-      campaigns,
+      campaigns: enrichedCampaigns,
+      attribution,
       creatives,
       ageGender,
       platforms,
@@ -49,7 +70,10 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error("Meta Ads API error:", error);
     return NextResponse.json(
-      { error: "Failed to fetch Meta Ads data" },
+      {
+        error: "Failed to fetch Meta Ads data",
+        details: error instanceof Error ? error.message : "Unknown Meta Ads error",
+      },
       { status: 500 }
     );
   }

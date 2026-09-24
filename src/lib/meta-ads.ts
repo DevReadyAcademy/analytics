@@ -1,5 +1,6 @@
-const accessToken = process.env.META_ADS_ACCESS_TOKEN!;
-const accountId = process.env.META_ADS_ACCOUNT_ID!;
+const accessToken = process.env.META_ADS_ACCESS_TOKEN?.trim();
+// Accept both `279...` and `act_279...` in deployment environment variables.
+const accountId = process.env.META_ADS_ACCOUNT_ID?.trim().replace(/^act_/i, "");
 
 const BASE_URL = "https://graph.facebook.com/v21.0";
 
@@ -41,6 +42,7 @@ export interface MetaAdsCreative {
 }
 
 export interface MetaAdsCampaign {
+  campaignId: string;
   campaignName: string;
   status: string;
   spend: number;
@@ -87,16 +89,26 @@ export interface FrequencyBucket {
 }
 
 async function fetchMetaAds(endpoint: string, params: Record<string, string>) {
+  if (!accessToken || !accountId) {
+    throw new Error("Meta Ads is not configured: set META_ADS_ACCESS_TOKEN and META_ADS_ACCOUNT_ID");
+  }
+
   const url = new URL(`${BASE_URL}/${endpoint}`);
   url.searchParams.set("access_token", accessToken);
   for (const [key, value] of Object.entries(params)) {
     url.searchParams.set(key, value);
   }
 
-  const response = await fetch(url.toString());
+  const response = await fetch(url.toString(), { cache: "no-store" });
   if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error?.message ?? "Meta Ads API error");
+    let error: { error?: { message?: string; code?: number; error_subcode?: number } } = {};
+    try {
+      error = await response.json();
+    } catch {
+      // Keep the HTTP status when Meta returns a non-JSON response.
+    }
+    const details = error.error?.message ?? `HTTP ${response.status}`;
+    throw new Error(`Meta Ads API error: ${details}`);
   }
   return response.json();
 }
@@ -229,7 +241,7 @@ export async function getCampaigns(
 ): Promise<MetaAdsCampaign[]> {
   const data = await fetchMetaAds(`act_${accountId}/insights`, {
     fields:
-      "campaign_name,spend,impressions,clicks,ctr,cpc,actions",
+      "campaign_id,campaign_name,spend,impressions,clicks,ctr,cpc,actions",
     time_range: JSON.stringify({
       since: startDate,
       until: endDate,
@@ -241,6 +253,7 @@ export async function getCampaigns(
   return (
     data.data?.map(
       (row: {
+        campaign_id?: string;
         campaign_name: string;
         spend: string;
         impressions: string;
@@ -253,6 +266,7 @@ export async function getCampaigns(
         const spend = Number(row.spend ?? 0);
 
         return {
+          campaignId: row.campaign_id ?? "",
           campaignName: row.campaign_name,
           status: "active",
           spend,
