@@ -30,7 +30,7 @@ export interface AttributionResult {
 }
 
 type Lead = { email: string; phone: string; createdTime: string; campaignId: string; campaignName: string };
-type CrmUser = { email?: string; phone?: string; booking?: { scheduledAt?: string }; paymentSummary?: { amountPaid?: number }; };
+type CrmUser = { email?: string; phone?: string; booking?: { scheduledAt?: string }; paymentSummary?: { amountPaid?: number; remaining?: number }; };
 type Enrollment = { user?: { email?: string }; totalAmount?: number; amountPaid?: number; createdAt?: string; history?: Array<{ amount?: number; date?: string }> };
 let leadsCache: { expires: number; value: Lead[] } | null = null;
 let crmCache: { expires: number; value: { users: CrmUser[]; enrollments: Enrollment[] } } | null = null;
@@ -151,6 +151,13 @@ export async function getCampaignAttribution(startDate: string, endDate: string,
   ]);
   const usersByEmail = new Map(crm.users.map((user) => [emailKey(user.email), user]));
   const usersByPhone = new Map(crm.users.map((user) => [phoneKey(user.phone), user]));
+  // Payment status is attached directly to CRM users by /api/users. This is the
+  // authoritative paid-customer check; enrollment data is used for revenue detail.
+  const paidUsersByEmail = new Map(
+    crm.users
+      .filter((user) => Number(user.paymentSummary?.amountPaid || 0) > 0)
+      .map((user) => [emailKey(user.email), user])
+  );
   const paidByEmail = new Map<string, { deposits: number; committed: number }>();
   const paidAllByEmail = new Map<string, { deposits: number; committed: number }>();
   const from = new Date(`${startDate}T00:00:00.000Z`).getTime();
@@ -200,11 +207,12 @@ export async function getCampaignAttribution(startDate: string, endDate: string,
         seenBookings.add(`${lead.campaignName}:${contactKey}`);
       }
       // A lead's campaign owns the conversion even when the customer paid later.
+      const paidUser = paidUsersByEmail.get(emailKey(user.email));
       const paid = paidAllByEmail.get(emailKey(user.email));
-      if (paid && !seenCustomers.has(`${lead.campaignName}:${contactKey}`)) {
+      if (paidUser && !seenCustomers.has(`${lead.campaignName}:${contactKey}`)) {
         row.customers += 1;
-        row.deposits += paid.deposits;
-        row.committedRevenue += paid.committed;
+        row.deposits += paid?.deposits ?? Number(paidUser.paymentSummary?.amountPaid || 0);
+        row.committedRevenue += paid?.committed ?? Number(paidUser.paymentSummary?.amountPaid || 0) + Number(paidUser.paymentSummary?.remaining || 0);
         seenCustomers.add(`${lead.campaignName}:${contactKey}`);
       }
     }
