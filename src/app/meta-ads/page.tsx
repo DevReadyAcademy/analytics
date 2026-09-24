@@ -198,7 +198,7 @@ export default function MetaAdsPage() {
         {loading ? (
           <LoadingPlaceholder />
         ) : data ? (
-          <div className="space-y-6">
+          <div className="flex flex-col gap-6">
             {data.attributionError && (
               <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 text-amber-800 text-sm">
                 CRM attribution is unavailable: {data.attributionError}. Meta metrics are still shown, but CRM leads, customers, CAC and ROAS cannot be calculated.
@@ -503,6 +503,7 @@ export default function MetaAdsPage() {
               }
             />
 
+            <div className="order-first">
             <CampaignsTable
               data={data.campaigns}
               infoContent={
@@ -535,6 +536,7 @@ export default function MetaAdsPage() {
                 </>
               }
             />
+            </div>
 
             {data.placements.length > 0 && (
               <PlacementTable

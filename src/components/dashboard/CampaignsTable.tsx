@@ -2,6 +2,7 @@
 
 import Card from "@/components/ui/Card";
 import ChartHeader from "@/components/ui/ChartHeader";
+import { Fragment, useState } from "react";
 
 interface Campaign {
   campaignId: string;
@@ -28,6 +29,7 @@ interface CampaignsTableProps {
 }
 
 export default function CampaignsTable({ data, infoContent }: CampaignsTableProps) {
+  const [expanded, setExpanded] = useState<string | null>(null);
   return (
     <Card>
       <ChartHeader title="Campaigns" infoContent={infoContent} />
@@ -52,8 +54,9 @@ export default function CampaignsTable({ data, infoContent }: CampaignsTableProp
           </thead>
           <tbody>
             {data.map((row, i) => (
-              <tr key={row.campaignName} className={i % 2 === 0 ? "bg-gray-50" : "bg-white"}>
-                <td className="py-2 px-2 text-gray-900 max-w-xs truncate">{row.campaignName}</td>
+              <Fragment key={row.campaignName}>
+              <tr key={row.campaignName} onClick={() => setExpanded(expanded === row.campaignName ? null : row.campaignName)} className={`${i % 2 === 0 ? "bg-gray-50" : "bg-white"} cursor-pointer hover:bg-indigo-50`}>
+                <td className="py-2 px-2 text-gray-900 max-w-xs truncate"><span className="mr-2 text-gray-400">{expanded === row.campaignName ? "▾" : "▸"}</span>{row.campaignName}</td>
                 <td className="py-2 px-2 text-right text-gray-700">&euro;{row.spend.toFixed(2)}</td>
                 <td className="py-2 px-2 text-right text-gray-700">{row.impressions.toLocaleString()}</td>
                 <td className="py-2 px-2 text-right text-gray-700">{row.clicks.toLocaleString()}</td>
@@ -67,6 +70,21 @@ export default function CampaignsTable({ data, infoContent }: CampaignsTableProp
                 <td className="py-2 px-2 text-right text-gray-700">{row.attribution?.customers ? `\u20AC${(row.spend / row.attribution.customers).toFixed(2)}` : "\u2014"}</td>
                 <td className="py-2 px-2 text-right text-gray-700">{row.attribution?.deposits ? `${(row.attribution.deposits / row.spend).toFixed(2)}x` : "\u2014"}</td>
               </tr>
+              {expanded === row.campaignName && (
+                <tr key={`${row.campaignName}-details`} className="bg-indigo-50/60">
+                  <td colSpan={13} className="px-4 py-4 text-sm text-gray-700">
+                    <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                      <div><span className="block text-xs text-gray-500">CRM leads</span><strong>{row.attribution?.leads ?? "—"}</strong></div>
+                      <div><span className="block text-xs text-gray-500">Booked calls</span><strong>{row.attribution?.bookings ?? "—"}</strong></div>
+                      <div><span className="block text-xs text-gray-500">Paid customers</span><strong>{row.attribution?.customers ?? "—"}</strong></div>
+                      <div><span className="block text-xs text-gray-500">Deposits</span><strong>{row.attribution?.deposits ? `€${row.attribution.deposits.toFixed(2)}` : "—"}</strong></div>
+                      <div><span className="block text-xs text-gray-500">Committed revenue</span><strong>{row.attribution?.committedRevenue ? `€${row.attribution.committedRevenue.toFixed(2)}` : "—"}</strong></div>
+                    </div>
+                    <p className="mt-3 text-xs text-gray-500">Click the row again to collapse. Attribution uses normalized CRM email/phone matching.</p>
+                  </td>
+                </tr>
+              )}
+              </Fragment>
             ))}
           </tbody>
         </table>
