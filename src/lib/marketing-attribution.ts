@@ -18,6 +18,17 @@ export interface CampaignAttribution {
   unattributedCustomers: number;
 }
 
+export interface AttributionResult {
+  campaigns: CampaignAttribution[];
+  overall: {
+    leads: number;
+    bookings: number;
+    paidCustomers: number;
+    deposits: number;
+    committedRevenue: number;
+  };
+}
+
 type Lead = { email: string; phone: string; createdTime: string; campaignId: string; campaignName: string };
 type CrmUser = { email?: string; phone?: string; booking?: { scheduledAt?: string }; paymentSummary?: { amountPaid?: number }; };
 type Enrollment = { user?: { email?: string }; totalAmount?: number; amountPaid?: number };
@@ -132,7 +143,7 @@ async function getCrmData() {
   return value;
 }
 
-export async function getCampaignAttribution(startDate: string, endDate: string, campaigns?: MetaAdsCampaign[]) {
+export async function getCampaignAttribution(startDate: string, endDate: string, campaigns?: MetaAdsCampaign[]): Promise<AttributionResult> {
   const [metaCampaigns, leads, crm] = await Promise.all([
     campaigns ? Promise.resolve(campaigns) : getCampaigns(startDate, endDate),
     getMetaLeads(),
@@ -182,5 +193,14 @@ export async function getCampaignAttribution(startDate: string, endDate: string,
     }
     result.set(lead.campaignName, row);
   }
-  return Array.from(result.values());
+  return {
+    campaigns: Array.from(result.values()),
+    overall: {
+      leads: leads.length,
+      bookings: crm.users.filter((user) => Boolean(user.booking?.scheduledAt)).length,
+      paidCustomers: paidByEmail.size,
+      deposits: Array.from(paidByEmail.values()).reduce((sum, value) => sum + value.deposits, 0),
+      committedRevenue: Array.from(paidByEmail.values()).reduce((sum, value) => sum + value.committed, 0),
+    },
+  };
 }
