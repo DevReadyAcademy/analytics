@@ -43,6 +43,9 @@ const CACHE_MS = 5 * 60 * 1000;
 const MANUAL_CAMPAIGN_ATTRIBUTIONS = new Map([
   ["kotsetasnikos@gmail.com", "120248364809630417"],
   ["timkal90@gmail.com", "120248364809630417"],
+  // Vasileios's CRM/Calendly record confirms that this paid customer came
+  // from the earlier 03 26 campaign, despite the later Meta lead export.
+  ["vas.kioutsoukis@gmail.com", "120241033952860417"],
 ]);
 
 async function metaGet(path: string, params: Record<string, string>, token = metaToken) {
