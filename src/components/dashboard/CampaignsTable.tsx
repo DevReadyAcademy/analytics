@@ -49,7 +49,7 @@ export default function CampaignsTable({ data, infoContent }: CampaignsTableProp
               <th className="text-right py-3 px-2 font-medium text-gray-500">Bookings</th>
               <th className="text-right py-3 px-2 font-medium text-gray-500">Customers</th>
               <th className="text-right py-3 px-2 font-medium text-gray-500">CAC</th>
-              <th className="text-right py-3 px-2 font-medium text-gray-500">ROAS</th>
+              <th className="text-right py-3 px-2 font-medium text-gray-500">Committed ROAS</th>
             </tr>
           </thead>
           <tbody>
@@ -68,7 +68,7 @@ export default function CampaignsTable({ data, infoContent }: CampaignsTableProp
                 <td className="py-2 px-2 text-right text-gray-700">{row.attribution?.bookings ?? "\u2014"}</td>
                 <td className="py-2 px-2 text-right text-gray-700">{row.attribution?.customers ?? "\u2014"}</td>
                 <td className="py-2 px-2 text-right text-gray-700">{row.attribution?.customers ? `\u20AC${(row.spend / row.attribution.customers).toFixed(2)}` : "\u2014"}</td>
-                <td className="py-2 px-2 text-right text-gray-700">{row.attribution?.deposits ? `${(row.attribution.deposits / row.spend).toFixed(2)}x` : "\u2014"}</td>
+                <td className="py-2 px-2 text-right text-gray-700">{row.attribution?.committedRevenue ? `${(row.attribution.committedRevenue / row.spend).toFixed(2)}x` : "\u2014"}</td>
               </tr>
               {expanded === row.campaignName && (
                 <tr key={`${row.campaignName}-details`} className="bg-indigo-50/60">
