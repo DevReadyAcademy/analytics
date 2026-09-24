@@ -36,6 +36,14 @@ let leadsCache: { expires: number; value: Lead[] } | null = null;
 let crmCache: { expires: number; value: { users: CrmUser[]; enrollments: Enrollment[] } } | null = null;
 const CACHE_MS = 5 * 60 * 1000;
 
+// Historical business-confirmed attribution for bookings that predate campaign
+// tracking. These are intentionally explicit and separate from exact Meta lead
+// matches; remove/extend only when the business attribution is confirmed.
+const MANUAL_CAMPAIGN_ATTRIBUTIONS = new Map([
+  ["kotsetasnikos@gmail.com", "120248364809630417"],
+  ["timkal90@gmail.com", "120248364809630417"],
+]);
+
 async function metaGet(path: string, params: Record<string, string>, token = metaToken) {
   if (!token) throw new Error("META_ADS_ACCESS_TOKEN is not configured");
   const url = new URL(`${META_BASE_URL}/${path}`);
@@ -217,6 +225,17 @@ export async function getCampaignAttribution(startDate: string, endDate: string,
       }
     }
     result.set(lead.campaignName, row);
+  }
+  for (const [email, campaignId] of Array.from(MANUAL_CAMPAIGN_ATTRIBUTIONS.entries())) {
+    const user = paidUsersByEmail.get(email);
+    const row = Array.from(result.values()).find((candidate) => candidate.campaignId === campaignId);
+    const paid = paidAllByEmail.get(email);
+    if (!user || !row || seenCustomers.has(`${row.campaignName}:${email}`)) continue;
+    row.customers += 1;
+    row.deposits += paid?.deposits ?? Number(user.paymentSummary?.amountPaid || 0);
+    row.committedRevenue += paid?.committed ?? Number(user.paymentSummary?.amountPaid || 0) + Number(user.paymentSummary?.remaining || 0);
+    row.unattributedCustomers += 1;
+    seenCustomers.add(`${row.campaignName}:${email}`);
   }
   return {
     campaigns: Array.from(result.values()),
