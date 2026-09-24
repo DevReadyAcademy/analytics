@@ -310,6 +310,11 @@ export default function MetaAdsPage() {
               />
             </div>
 
+            <CampaignsTable
+              data={data.campaigns}
+              infoContent={<p>Click a campaign row to expand its Meta funnel and CRM revenue outcomes. Paid customers are the primary business conversion.</p>}
+            />
+
             <TargetComparisonChart
               ctr={data.metrics.ctr}
               cpc={data.metrics.cpc}
@@ -503,7 +508,7 @@ export default function MetaAdsPage() {
               }
             />
 
-            <div className="order-first">
+            <div className="hidden">
             <CampaignsTable
               data={data.campaigns}
               infoContent={
