@@ -116,7 +116,14 @@ async function getCrmData() {
     fetch(`${lmsUrl}/api/users?select=email,phone,booking,paymentSummary`, { headers, cache: "no-store" }),
     fetch(`${lmsUrl}/api/enrollments`, { headers, cache: "no-store" }),
   ]);
-  if (!usersResponse.ok || !enrollmentsResponse.ok) throw new Error("CRM API request failed");
+  if (!usersResponse.ok || !enrollmentsResponse.ok) {
+    throw new Error(`CRM API request failed (${usersResponse.status}/${enrollmentsResponse.status}). Use LMS_API_URL=https://api.devready.gr, without a trailing /api.`);
+  }
+  const usersType = usersResponse.headers.get("content-type") || "";
+  const enrollmentsType = enrollmentsResponse.headers.get("content-type") || "";
+  if (!usersType.includes("application/json") || !enrollmentsType.includes("application/json")) {
+    throw new Error("CRM API returned HTML instead of JSON. Set LMS_API_URL to https://api.devready.gr (not my.devready.gr) and redeploy.");
+  }
   const value = {
     users: await usersResponse.json() as CrmUser[],
     enrollments: await enrollmentsResponse.json() as Enrollment[],
