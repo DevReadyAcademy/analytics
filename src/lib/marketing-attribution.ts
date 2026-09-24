@@ -10,6 +10,7 @@ export interface CampaignAttribution {
   campaignId: string;
   campaignName: string;
   leads: number;
+  uniqueLeads: number;
   bookings: number;
   customers: number;
   deposits: number;
@@ -200,12 +201,12 @@ export async function getCampaignAttribution(startDate: string, endDate: string,
   const scopedLeads = leads.filter((lead) => isInRange(lead.createdTime));
   const result = new Map<string, CampaignAttribution>();
   for (const campaign of metaCampaigns) {
-    result.set(campaign.campaignName, { campaignId: campaign.campaignId, campaignName: campaign.campaignName, leads: 0, bookings: 0, customers: 0, deposits: 0, committedRevenue: 0, matchedContacts: 0, unattributedCustomers: 0 });
+    result.set(campaign.campaignName, { campaignId: campaign.campaignId, campaignName: campaign.campaignName, leads: 0, uniqueLeads: 0, bookings: 0, customers: 0, deposits: 0, committedRevenue: 0, matchedContacts: 0, unattributedCustomers: 0 });
   }
   const seenBookings = new Set<string>();
   const seenCustomers = new Set<string>();
   for (const lead of scopedLeads) {
-    const row = result.get(lead.campaignName) || { campaignId: lead.campaignId, campaignName: lead.campaignName, leads: 0, bookings: 0, customers: 0, deposits: 0, committedRevenue: 0, matchedContacts: 0, unattributedCustomers: 0 };
+    const row = result.get(lead.campaignName) || { campaignId: lead.campaignId, campaignName: lead.campaignName, leads: 0, uniqueLeads: 0, bookings: 0, customers: 0, deposits: 0, committedRevenue: 0, matchedContacts: 0, unattributedCustomers: 0 };
     row.leads += 1;
     const user = (lead.email && usersByEmail.get(lead.email)) || (lead.phone && usersByPhone.get(lead.phone));
     if (user) {
@@ -226,6 +227,13 @@ export async function getCampaignAttribution(startDate: string, endDate: string,
       }
     }
     result.set(lead.campaignName, row);
+  }
+  for (const row of Array.from(result.values())) {
+    const contacts = new Set(scopedLeads
+      .filter((lead) => lead.campaignName === row.campaignName)
+      .map((lead) => lead.email || lead.phone)
+      .filter(Boolean));
+    row.uniqueLeads = contacts.size;
   }
   for (const [email, campaignId] of Array.from(MANUAL_CAMPAIGN_ATTRIBUTIONS.entries())) {
     const user = paidUsersByEmail.get(email);

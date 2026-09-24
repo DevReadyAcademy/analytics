@@ -16,6 +16,7 @@ interface Campaign {
   cpa: number;
   attribution?: {
     leads: number;
+    uniqueLeads: number;
     bookings: number;
     customers: number;
     deposits: number;
@@ -73,12 +74,17 @@ export default function CampaignsTable({ data, infoContent }: CampaignsTableProp
               {expanded === row.campaignName && (
                 <tr key={`${row.campaignName}-details`} className="bg-indigo-50/60">
                   <td colSpan={13} className="px-4 py-4 text-sm text-gray-700">
-                    <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-                      <div><span className="block text-xs text-gray-500">CRM leads</span><strong>{row.attribution?.leads ?? "—"}</strong></div>
-                      <div><span className="block text-xs text-gray-500">Booked calls</span><strong>{row.attribution?.bookings ?? "—"}</strong></div>
+                    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                      <div><span className="block text-xs text-gray-500">Meta leads</span><strong>{row.attribution?.leads ?? "—"}</strong></div>
+                      <div><span className="block text-xs text-gray-500">Unique contacts</span><strong>{row.attribution?.uniqueLeads ?? "—"}</strong></div>
+                      <div><span className="block text-xs text-gray-500">Matched bookings</span><strong>{row.attribution?.bookings ?? "—"}</strong></div>
+                      <div><span className="block text-xs text-gray-500">Lead → booking</span><strong>{row.attribution?.uniqueLeads ? `${((row.attribution.bookings / row.attribution.uniqueLeads) * 100).toFixed(1)}%` : "—"}</strong></div>
                       <div><span className="block text-xs text-gray-500">Paid customers</span><strong>{row.attribution?.customers ?? "—"}</strong></div>
+                      <div><span className="block text-xs text-gray-500">CAC</span><strong>{row.attribution?.customers ? `€${(row.spend / row.attribution.customers).toFixed(2)}` : "—"}</strong></div>
                       <div><span className="block text-xs text-gray-500">Deposits</span><strong>{row.attribution?.deposits ? `€${row.attribution.deposits.toFixed(2)}` : "—"}</strong></div>
+                      <div><span className="block text-xs text-gray-500">Cash ROAS</span><strong>{row.attribution?.deposits ? `${(row.attribution.deposits / row.spend).toFixed(2)}x` : "—"}</strong></div>
                       <div><span className="block text-xs text-gray-500">Committed revenue</span><strong>{row.attribution?.committedRevenue ? `€${row.attribution.committedRevenue.toFixed(2)}` : "—"}</strong></div>
+                      <div><span className="block text-xs text-gray-500">Committed ROAS</span><strong>{row.attribution?.committedRevenue ? `${(row.attribution.committedRevenue / row.spend).toFixed(2)}x` : "—"}</strong></div>
                     </div>
                     <p className="mt-3 text-xs text-gray-500">Click the row again to collapse. Attribution uses normalized CRM email/phone matching.</p>
                   </td>

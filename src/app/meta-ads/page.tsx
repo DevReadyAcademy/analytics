@@ -76,6 +76,7 @@ interface MetaAdsData {
     cpa: number;
     attribution?: {
       leads: number;
+      uniqueLeads: number;
       bookings: number;
       customers: number;
       deposits: number;
