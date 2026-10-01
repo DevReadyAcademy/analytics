@@ -25,6 +25,7 @@ export interface AttributionResult {
     leads: number;
     bookings: number;
     paidCustomers: number;
+    totalPaidCustomers: number;
     deposits: number;
     committedRevenue: number;
   };
@@ -261,6 +262,7 @@ export async function getCampaignAttribution(startDate: string, endDate: string,
       leads: scopedLeads.length,
       bookings: crm.users.filter((user) => isInRange(user.booking?.scheduledAt)).length,
       paidCustomers: paidByEmail.size,
+      totalPaidCustomers: paidUsersByEmail.size,
       deposits: Array.from(paidByEmail.values()).reduce((sum, value) => sum + value.deposits, 0),
       committedRevenue: Array.from(paidByEmail.values()).reduce((sum, value) => sum + value.committed, 0),
     },

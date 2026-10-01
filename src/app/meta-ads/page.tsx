@@ -35,6 +35,7 @@ interface MetaAdsData {
     crmLeads?: number;
     crmBookings?: number;
     paidCustomers?: number;
+    totalPaidCustomers?: number;
     deposits?: number;
     committedRevenue?: number;
     customerAcquisitionCost?: number;
@@ -276,6 +277,11 @@ export default function MetaAdsPage() {
                 value={data.metrics.paidCustomers ?? 0}
                 tooltip="Primary business conversion: CRM contacts with at least one recorded payment"
                 previousValue={prev?.paidCustomers}
+              />
+              <MetricCard
+                title="Total paid customers"
+                value={data.metrics.totalPaidCustomers ?? 0}
+                tooltip="Lifetime CRM total: unique contacts with at least one recorded payment, independent of the selected date range"
               />
               <MetricCard
                 title="Meta lead actions"

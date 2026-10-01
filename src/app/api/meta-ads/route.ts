@@ -41,7 +41,7 @@ export async function GET(request: NextRequest) {
     ]);
     let attribution: Awaited<ReturnType<typeof getCampaignAttribution>> = {
       campaigns: [],
-      overall: { leads: 0, bookings: 0, paidCustomers: 0, deposits: 0, committedRevenue: 0 },
+      overall: { leads: 0, bookings: 0, paidCustomers: 0, totalPaidCustomers: 0, deposits: 0, committedRevenue: 0 },
     };
     let attributionError: string | null = null;
     try {
@@ -68,6 +68,7 @@ export async function GET(request: NextRequest) {
         crmLeads: crmTotals.leads,
         crmBookings: crmTotals.bookings,
         paidCustomers: crmTotals.paidCustomers,
+        totalPaidCustomers: crmTotals.totalPaidCustomers,
         deposits: crmTotals.deposits,
         committedRevenue: crmTotals.committedRevenue,
         customerAcquisitionCost: crmTotals.paidCustomers > 0 ? metrics.spend / crmTotals.paidCustomers : 0,
