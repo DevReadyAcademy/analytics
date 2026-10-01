@@ -175,7 +175,14 @@ export async function getCampaignAttribution(startDate: string, endDate: string,
   const from = new Date(`${startDate}T00:00:00.000Z`).getTime();
   const until = new Date(`${endDate}T23:59:59.999Z`).getTime();
   const isInRange = (value?: string) => {
-    const time = value ? new Date(value).getTime() : NaN;
+    const raw = String(value || "").trim();
+    // CRM exports can contain a Madrid-local display date (DD/MM/YYYY),
+    // which Node does not parse reliably. Treat that form as the calendar day
+    // supplied by the CRM; ISO timestamps continue to preserve their offset.
+    const displayDate = raw.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s|$)/);
+    const time = displayDate
+      ? Date.UTC(Number(displayDate[3]), Number(displayDate[2]) - 1, Number(displayDate[1]))
+      : raw ? new Date(raw).getTime() : NaN;
     return Number.isFinite(time) && time >= from && time <= until;
   };
   for (const enrollment of crm.enrollments) {
